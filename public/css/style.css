@@ -29,7 +29,7 @@ Author: The_Krishna
 
 /*------------------------ [Color codes] ------------------------                     
 Background: #F5F5F5 
-Content:    #FF1616, #737373 ,#000000,#A6A6A6
+Content:    #289cdb, #737373 ,#000000,#A6A6A6
 -------------------------------------------------------------------*/
 
 /************************ 1.Default css ***************************/
@@ -56,7 +56,7 @@ h5,
 h6,
 p {
 	margin: 0;
-	padding: 0;
+	padding-bottom: 10px;
 }
 body {
 	max-width: 425px;
@@ -147,7 +147,7 @@ ul{
 .header-content {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
+	justify-content: flex-end;
 	padding: 15px 16px 0 16px;
 }
 .header-logo {
@@ -246,7 +246,7 @@ ul{
 	border-radius: 50%;
 }
 .profile-name h1 {
-	color: #FF1616;
+	color: #289cdb;
 	font-family: Poppins;
 	font-size: 24px;
 	font-style: normal;
@@ -280,7 +280,7 @@ ul{
 	width: 36px;
 	height: 36px;
 	border-radius: 50%;
-	background: red;
+	background: #289cdb;
 	transition: 0.3s;
 }
 .social-icon-content-wrap:hover img{
@@ -385,7 +385,7 @@ ul{
 }
 .contact-content p:hover {
 	text-decoration: underline;
-	color: #ff1616 !important;
+	color: #289cdb !important;
 	transition: all 0.3s ease-in-out;
 }
 .appointment-sec .about-title h2:after {
@@ -400,7 +400,7 @@ ul{
 	font-weight: 600;
 	line-height: 20px;
 	border-radius: 5px;
-	background: var(--15, #FF1616);
+	background: var(--15, #289cdb);
 	padding: 8px 12px;
 	display: flex;
 	align-items: center;
@@ -411,9 +411,9 @@ ul{
 	transition: all 0.3s ease-in-out;
 }
 .view-product a:hover{
-	border: 1px solid #FF1616;
+	border: 1px solid #289cdb;
 	background: transparent;
-	color: #FF1616;
+	color: #289cdb;
 	transition: all 0.3s ease-in-out;
 }
 /************************ 7.Datepicker css ***************************/
@@ -475,7 +475,7 @@ div#ui-datepicker-div {
 	background-color: rgb(252 52 47 / 40%);
 }
 .ui-datepicker-calendar tbody td a.ui-state-active {
-	background-color: #FF1616;
+	background-color: #289cdb;
 	color: white;
 }
 .ui-datepicker-header a.ui-corner-all {
@@ -519,7 +519,7 @@ div#ui-datepicker-div {
 }
 .prodcut-price {
 	border-radius: 5px;
-	background: var(--15, #FF1616);
+	background: var(--15, #289cdb);
 	padding: 3px 8px;
 	width: fit-content;
 	position: absolute;
@@ -559,7 +559,7 @@ div#ui-datepicker-div {
 /************************ 10.Testimonial css ***************************/
 .testimonial-content {
 	border-radius: 12px;
-	background: rgb(255 22 22 / 10%);
+	background: rgba(40, 156, 219, 0.1);
 	padding: 15px;
 }
 .testimonial-content-wrap {
@@ -642,7 +642,7 @@ div#ui-datepicker-div {
 	display: flex;
 	gap: 12px;
 	border-radius: 12px;
-	background: var(--15, rgb(255 22 22 / 10%));
+	background: var(--bs-info-bg, rgba(40, 156, 219, 0.1));
 	padding: 12px;
 }
 .contact-icon {
@@ -691,8 +691,8 @@ div#ui-datepicker-div {
 .scan-btn {
 	width: 60px;
 	height: 60px;
-	background: var(--15, #FF1616);
-	filter: drop-shadow(0px 4px 8px rgba(255, 22, 22, 0.32));
+	background: var(--15, #289cdb);
+	filter: drop-shadow(0px 4px 8px rgba(40, 156, 219, 0.32));
 	border-radius: 50%;
 	display: flex;
 	align-items: center;
@@ -751,7 +751,7 @@ div#ui-datepicker-div {
 }
 .scan-content {
 	text-align: center;
-	border: 2px solid #ff1616;
+	border: 2px solid #289cdb;
 	height: auto;
 	width: 250px;
 	margin: 0 auto;
@@ -764,7 +764,7 @@ div#ui-datepicker-div {
 }
 .scan-txt {
 	padding: 14px;
-	background: #FF1616;
+	background: #289cdb;
 	border-radius: 8px;
 }
 .scan-txt p {
@@ -828,7 +828,7 @@ div#ui-datepicker-div {
 	transition: all .3s ease; 
 }
 .social-media-img:hover {
-	background: #FF1616;
+	background: #289cdb;
 	transition: all .3s ease;
 }
 .social-media-img img {
@@ -858,7 +858,7 @@ div#ui-datepicker-div {
 	font-weight: 600;
 	line-height: 20px;
 	border-radius: 5px;
-	background: var(--15, #FF1616);
+	background: var(--15, #289cdb);
 	padding: 8px 12px;
 	display: flex;
 	align-items: center;
@@ -979,7 +979,7 @@ blockquote {
 	line-height: 20px;
 }
 blockquote h3{
-	color: var(--2, #FF1616);
+	color: var(--2, #289cdb);
 	font-family: Poppins;
 	font-size: 18px;
 	font-style: normal;
@@ -1085,7 +1085,7 @@ blockquote h3{
 	width: 50px;
 	height: 50px;
 	border-radius: 0%;
-	background-color: #FF1616;
+	background-color: #289cdb;
 }
 @keyframes rotate {
 	0% {
