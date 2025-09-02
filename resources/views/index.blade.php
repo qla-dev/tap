@@ -83,19 +83,14 @@
 				</div>
 			</div>
 			<div class="social-icon-content container">
-				@if(!empty($user->booking))
-					<div class="social-icon-content-wrap">
-						<a href="{{ $user->booking }}" target="_blank"><i class="fab fa-booking  mx-2"></i></a>
-					</div>
-				@endif
 				@if(!empty($user->airbnb))
 					<div class="social-icon-content-wrap">
-						<a href="{{ $user->airbnb }}" target="_blank"><i class="fab fa-airbnb  mx-2"></i></a>
+						<a href="{{ $user->airbnb }}" target="_blank"><i class="fab fa-airbnb  mx-2" style="font-size: 18px; font-weight: 700;"></i></a>
 					</div>
 				@endif
 				@if(!empty($user->instagram))
 					<div class="social-icon-content-wrap">
-						<a href="{{ $user->instagram }}" target="_blank"><i class="fab fa-instagram  mx-2"></i></a>
+						<a href="{{ $user->instagram }}" target="_blank"><i class="fab fa-instagram  mx-2" style="font-size: 18px; font-weight: 700;"></i></a>
 					</div>
 				@endif
 				@if(!empty($user->phone_number))
@@ -203,24 +198,22 @@
 						<h2 class="background">Galerija</h2>
 					</div>
 					<div class="gallery-bottom mt-10">
-						<div class="gallery-item">
-							<div class="gallery-box">
-								<div class="gallery-img"> <img src="{{ asset('images/gallery/gallery1.png') }}" alt="gallery" class="w-100"> </div>
-								<a href="{{ asset('images/gallery/gallery1.png') }}" class="img-zoom w-100"><div class="gallery-detail text-center"><img src="{{ asset('svg/plus-icon.svg') }}" alt="plus-icon"></div></a>
-							</div>
-						</div>
-						<div class="gallery-item">
-							<div class="gallery-box">
-								<div class="gallery-img"> <img src="{{ asset('images/gallery/gallery2.png') }}" alt="gallery" class="w-100"> </div>
-								<a href="{{ asset('images/gallery/gallery2.png') }}" class="img-zoom w-100"><div class="gallery-detail text-center"><img src="{{ asset('svg/plus-icon.svg') }}" alt="plus-icon"></div></a>
-							</div>
-						</div>
-						<div class="gallery-item">
-							<div class="gallery-box">
-								<div class="gallery-img"> <img src="{{ asset('images/gallery/gallery3.png') }}" alt="gallery" class="w-100"> </div>
-								<a href="{{ asset('images/gallery/gallery3.png') }}" class="img-zoom w-100"><div class="gallery-detail text-center"><img src="{{ asset('svg/plus-icon.svg') }}" alt="plus-icon"></div></a>
-							</div>
-						</div>
+						
+                            @foreach($user->gallery as $item)
+                                <div class="gallery-item">
+                                    <div class="gallery-box">
+                                        <div class="gallery-img">
+                                            <img src="{{ asset($item['image']) }}" alt="{{ $item['alt'] ?? 'gallery' }}" class="w-100">
+                                        </div>
+                                        <a href="{{ asset($item['zoom']) }}" class="img-zoom w-100">
+                                            <div class="gallery-detail text-center">
+                                                <img src="{{ asset('svg/plus-icon.svg') }}" alt="plus-icon">
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+                            @endforeach
+
 					</div>
 				</div>
 			</div>
@@ -431,13 +424,13 @@
 					<a href="javascript:void(0)" class="scan-btn" data-bs-toggle="modal" data-bs-target="#product-modal">
 						<img src="{{ asset('images/bottom-sec/scan-icon.svg') }}" alt="scan-icon">
 					</a>
-					<a href="javascript:void(0)" class="scan-btn" data-bs-toggle="modal" data-bs-target="#share-media-modal">
+					<a href="javascript:void(0)" class="scan-btn" data-bs-toggle="modal" onclick="sharePage()">
 						<img src="{{ asset('images/bottom-sec/share-icon.svg') }}" alt="share-icon">
 					</a>
-					<a href="javascript:void(0)" class="add-to-btn">
+					<a href="{{ $user->booking }}" class="add-to-btn">
 						<div class="add-to-btn-sec">
-							<div class="add-txt">Dodaj u kontakte</div>
-							<div class="plus-btn"><img src="{{ asset('images/bottom-sec/plus-icon.svg') }}" alt="plus-icon"></div>
+							<div class="add-txt">Booking</div>
+							<div class="plus-btn"><img src="{{ asset('images/social-icon/booking.png') }}" alt="services-img" style="width: 24px; height: 24px;"></div>
 						</div>
 					</a>
 				</div>		
@@ -459,17 +452,6 @@
 							<div class="scanner">
 								<img src="{{ asset('images/main-img/scanner-img.png') }}" alt="scanner-img" class="">
 							</div>
-							<div class="scan-txt mt-20">
-								<p>Scan me</p>
-							</div>
-						</div>
-						<div class="qr-btn mt-30">
-							<div class="btn1">
-								<a href="javascript:void(0)">Download</a>
-							</div>
-							<div class="btn1">
-								<a href="javascript:void(0)">Share</a>
-							</div>
 						</div>
 					</div>
 				</div>
@@ -477,44 +459,6 @@
 		</div>
 		<!--  Scan modal end -->
 		<!--  Share modal start -->
-		<div class="modal fade" id="share-media-modal" tabindex="-1"  aria-hidden="true">
-			<div class="modal-dialog modal-dialog-centered">
-				<div class="modal-content">
-					<div class="modal-header">
-						<h5 class="modal-title">Podijeli na</h5>
-						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-					</div>
-					<div class="modal-body">
-						<div class="social-media-content">
-							<div class="social-media-img">
-								<a href="https://www.facebook.com/" target="_blank"><img src="{{ asset('images/social-icon/icon2.svg') }}" alt="social-icon"></a>
-							</div>
-							<div class="social-media-img">
-								<a href="https://www.instagram.com/" target="_blank"><img src="{{ asset('images/social-icon/icon3.svg') }}" alt="social-icon"></a>
-							</div>
-							<div class="social-media-img">
-								<a href="https://web.whatsapp.com/" target="_blank"><img src="{{ asset('images/social-icon/icon4.svg') }}" alt="social-icon"></a>
-							</div>
-							<div class="social-media-img">
-								<a href="https://www.linkedin.com/" target="_blank"><img src="{{ asset('images/social-icon/icon5.svg') }}" alt="social-icon"></a>
-							</div>
-							<div class="social-media-img">
-								<a href="https://x.com/" target="_blank"><img src="{{ asset('images/social-icon/icon6.svg') }}" alt="social-icon"></a>
-							</div>
-							<div class="social-media-img">
-								<a href="https://web.telegram.org/a/" target="_blank"><img src="{{ asset('images/social-icon/icon7.svg') }}" alt="social-icon"></a>
-							</div>
-							<div class="social-media-img">
-								<a href="https://analytics.pinterest.com/login/" target="_blank"><img src="{{ asset('images/social-icon/icon10.svg') }}" alt="social-icon"></a>
-							</div>
-							<div class="social-media-img">
-								<a href="mailto:jordan.smith@mail.com" target="_blank"><img src="{{ asset('images/social-icon/icon9.svg') }}" alt="social-icon"></a>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
 		<!--  Share modal end -->
 	</div>
 	<script src="{{ asset('js/jquery.min.js') }}"></script>
@@ -526,5 +470,18 @@
 	<script src="{{ asset('js/gallery.js') }}"></script>
 	<script src="{{ asset('js/cursor.js') }}"></script>
 	<script src="{{ asset('js/custom.js') }}"></script>
+	<script>
+	function sharePage() {
+		if (navigator.share) {
+			navigator.share({
+				title: document.title,
+				url: window.location.href
+			});
+		} else {
+			navigator.clipboard.writeText(window.location.href);
+			alert('Link kopiran!');
+		}
+	}
+	</script>
 </body>
 </html>
