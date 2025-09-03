@@ -9,7 +9,7 @@
     <meta property="og:title" content="{{ $user->name }} {{ $user->title }}">
     <meta property="og:description" content="{{ $user->about_me ? strip_tags($user->about_me) : 'Digitalna business kartica za ' . $user->name }}">
     <meta property="og:image" content="{{ $user->profile_image ? asset($user->profile_image) : asset('images/main-img/profile.png') }}">
-    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:url" content="https://tap.qla.dev/{{ request()->route('name') }}">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $user->name }} {{ $user->title }}">
