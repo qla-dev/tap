@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title> {{ $user->name }} {{ $user->title }}| tap.qla.dev - Digitalne Business Kartice</title>
+    <title> {{ $user->name }} {{ $user->title }} | tap.qla.dev - Digitalne Business Kartice</title>
     <meta name="description" content="{{ $user->about_me ? strip_tags($user->about_me) : 'Digitalna business kartica za ' . $user->name }}">
     <meta name="keywords" content="business, kartica, digital, {{ $user->name }}, {{ $user->title }}">
     <meta property="og:title" content="{{ $user->name }} {{ $user->title }}">
@@ -450,7 +450,7 @@
 					<div class="modal-body">
 						<div class="scan-content">
 							<div class="scanner">
-								<img src="{{ asset('images/main-img/scanner-img.png') }}" alt="scanner-img" class="">
+								<img src="{{ asset('images/clients/porta/qr.svg') }}" alt="scanner-img" class="">
 							</div>
 						</div>
 					</div>
