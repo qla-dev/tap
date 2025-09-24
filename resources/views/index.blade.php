@@ -364,7 +364,7 @@
 								<img src="{{ asset('images/contact/office.svg') }}" alt="office-icon">
 							</div>
 							<div class="contact-content">
-								<h4  class="p-0">Broj apartmana</h4>
+								<h4  class="p-0">Kancelarija</h4>
 								<a href="tel:{{ $user->office_number }}"><p class="mt-10">{{ $user->office_number }}</p></a>
 							</div>
 						</div>
@@ -375,7 +375,7 @@
 								<img src="{{ asset('images/contact/location.svg') }}" alt="location-icon">
 							</div>
 							<div class="contact-content">
-								<h4  class="p-0">Adresa kancelarije</h4>
+								<h4  class="p-0">Adresa</h4>
 								<p class="mt-10">{{ $user->office_address }}</p>
 							</div>
 						</div>
@@ -389,12 +389,12 @@
 								<div class="contact-time-list mt-10">
 									@php
 										$work_hours = $user->work_hours ?? [
-											'Ponedjeljak' => '09:00 - 22:00',
-											'Utorak' => '09:00 - 22:00',
-											'Srijeda' => '09:00 - 22:00',
-											'Četvrtak' => '09:00 - 22:00',
-											'Petak' => '09:00 - 22:00',
-											'Subota' => '09:00 - 22:00',
+											'Ponedjeljak' => '05:30 - 21:00',
+											'Utorak' => '05:30 - 21:00',
+											'Srijeda' => '05:30 - 21:00',
+											'Četvrtak' => '05:30 - 21:00',
+											'Petak' => '05:30 - 21:00',
+											'Subota' => '05:30 - 12:00',
 											'Nedjelja' => 'Zatvoreno'
 										];
 									@endphp
@@ -427,12 +427,26 @@
 					<a href="javascript:void(0)" class="scan-btn" data-bs-toggle="modal" onclick="sharePage()">
 						<img src="{{ asset('images/bottom-sec/share-icon.svg') }}" alt="share-icon">
 					</a>
-					<a href="{{ $user->booking }}" class="add-to-btn">
-						<div class="add-to-btn-sec">
-							<div class="add-txt">Booking</div>
-							<div class="plus-btn"><img src="{{ asset('images/social-icon/booking.png') }}" alt="services-img" style="width: 24px; height: 24px;"></div>
-						</div>
-					</a>
+				@if(!empty($user->booking))
+    <a href="{{ $user->booking }}" class="add-to-btn">
+        <div class="add-to-btn-sec">
+            <div class="add-txt">Booking</div>
+            <div class="plus-btn">
+                <img src="{{ asset('images/social-icon/booking.png') }}" alt="services-img" style="width: 24px; height: 24px;">
+            </div>
+        </div>
+    </a>
+@else
+    <a href="{{ $user->reviews }}" class="add-to-btn">
+        <div class="add-to-btn-sec"  style="background-color: white; color: black;">
+            <div class="add-txt" style="color: black;">Ocijeni</div>
+            <div class="plus-btn">
+                <img src="{{ asset('images/social-icon/google.webp') }}" alt="services-img" style="width: 24px; height: 24px;">
+            </div>
+        </div>
+    </a>
+@endif
+
 				</div>		
 			</div>
 			<div class="footer mt-10" style="margin-bottom: 70px;">
@@ -450,7 +464,7 @@
 					<div class="modal-body">
 						<div class="scan-content">
 							<div class="scanner">
-								<img src="{{ asset('images/clients/porta/qr.svg') }}" alt="scanner-img" class="">
+								<img src="{{ asset('images/clients/' . strtolower($user->name) . '/qr.svg') }}" alt="scanner-img" class="">
 							</div>
 						</div>
 					</div>

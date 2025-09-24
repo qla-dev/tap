@@ -70,6 +70,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'gallery' => 'array',
+            'work_hours' => 'array',
         ];
     }
 }
