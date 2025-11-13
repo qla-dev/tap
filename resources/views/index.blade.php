@@ -24,6 +24,11 @@
     <link rel="stylesheet" href="{{ asset('css/cursor.css') }}">
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
     <link rel="stylesheet" href="{{ asset('css/media-query.css') }}">
+    <style>
+        a {
+            color: #289cdb!important;
+        }
+    </style>
 </head>
 <body>
 	<div class="site-content">
@@ -83,16 +88,17 @@
 				</div>
 			</div>
 			<div class="social-icon-content container">
-				@if(!empty($user->airbnb))
+			    @if(!empty($user->website))
 					<div class="social-icon-content-wrap">
-						<a href="{{ $user->airbnb }}" target="_blank"><i class="fab fa-airbnb  mx-2" style="font-size: 18px; font-weight: 700;"></i></a>
+						<a href="{{ $user->website }}" target="_blank"><i class="fa fa-globe  mx-2" style="font-size: 18px; font-weight: 700;"></i></a>
+					</div>
+				@endif 
+					@if(!empty($user->directions))
+					<div class="social-icon-content-wrap">
+						<a href="{{ $user->directions }}" target="_blank"><i class="fas fa-directions  mx-2" style="font-size: 18px; font-weight: 700;"></i></a>
 					</div>
 				@endif
-				@if(!empty($user->instagram))
-					<div class="social-icon-content-wrap">
-						<a href="{{ $user->instagram }}" target="_blank"><i class="fab fa-instagram  mx-2" style="font-size: 18px; font-weight: 700;"></i></a>
-					</div>
-				@endif
+		
 				@if(!empty($user->phone_number))
 					<div class="social-icon-content-wrap">
 						<a href="tel:{{ $user->phone_number }}"><i class="fas fa-phone  mx-2"></i></a>
@@ -101,6 +107,16 @@
 				@if(!empty($user->email))
 					<div class="social-icon-content-wrap">
 						<a href="mailto:{{ $user->email }}"><i class="fas fa-envelope  mx-2"></i></a>
+					</div>
+				@endif
+						@if(!empty($user->airbnb))
+					<div class="social-icon-content-wrap">
+						<a href="{{ $user->airbnb }}" target="_blank"><i class="fab fa-airbnb  mx-2" style="font-size: 18px; font-weight: 700;"></i></a>
+					</div>
+				@endif
+				@if(!empty($user->instagram))
+					<div class="social-icon-content-wrap">
+						<a href="{{ $user->instagram }}" target="_blank"><i class="fab fa-instagram  mx-2" style="font-size: 18px; font-weight: 700;"></i></a>
 					</div>
 				@endif
 				@if(!empty($user->google))
@@ -421,7 +437,7 @@
 			</div>
 			<div class="add-to-contact container mt-30">
 				<div class="add-to-contact-wrap">
-					<a href="javascript:void(0)" class="scan-btn" data-bs-toggle="modal" data-bs-target="#product-modal">
+					<a href="javascript:void(0)" class="scan-btn d-none" data-bs-toggle="modal" data-bs-target="#product-modal">
 						<img src="{{ asset('images/bottom-sec/scan-icon.svg') }}" alt="scan-icon">
 					</a>
 					<a href="javascript:void(0)" class="scan-btn" data-bs-toggle="modal" onclick="sharePage()">
