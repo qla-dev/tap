@@ -47,6 +47,11 @@ class User extends Authenticatable
         'services',
         'website',
         'directions',
+        'airbnb',
+        'google',
+        'pik',
+        'booking',
+        'reviews',
     ];
 
     /**

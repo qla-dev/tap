@@ -22,11 +22,43 @@
     <link rel="stylesheet" href="{{ asset('css/magnific-popup.css') }}">
     <link rel="stylesheet" href="{{ asset('css/slick.css') }}">
     <link rel="stylesheet" href="{{ asset('css/cursor.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/media-query.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}?v=5">
+    <link rel="stylesheet" href="{{ asset('css/media-query.css') }}?v=3">
     <style>
+
+.about-content p, .services-content p {
+	color:unset!important;
+	font-size: 15px!important;
+}
+
+.contact-content p {padding-bottom: 0!important;}
         a {
             color: #289cdb!important;
+        }
+        .hero-section {
+            position: relative;
+            overflow: hidden;
+            height: 350px;
+            width: 100%;
+        }
+        .bg-orange.bg-img1 {
+            position: absolute !important;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            min-height: 350px;
+            clip-path: polygon(100% 0, 100% 70%, 0 100%, 0 0);
+            background-size: cover !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+            z-index: 2 !important;
+        }
+        .social-icon-content-wrap .olx-icon {
+            filter: brightness(0) saturate(100%) invert(54%) sepia(87%) saturate(3356%) hue-rotate(179deg) brightness(102%) contrast(86%) !important;
+        }
+        .social-icon-content-wrap:hover .olx-icon {
+            filter: brightness(0) saturate(100%) invert(100%) sepia(100%) saturate(0%) hue-rotate(304deg) brightness(104%) contrast(102%) !important;
         }
     </style>
 </head>
@@ -71,10 +103,7 @@
 				</div>
 			</header>
 			<div class="hero-section">
-				<div class="bg-orange">
-					<img src="{{ $user->cover_image ? asset($user->cover_image) : asset('images/main-img/hero-bg-img.png') }}" alt="bg-img" class="bg-img1" width="450">
-					<img src="{{ asset('images/main-img/blue-bg.svg') }}" alt="bg-img" class="bg-img2" >
-				</div>
+				<div class="bg-orange bg-img1" style="background-image: url('{{ $user->cover_image ? asset($user->cover_image) : asset('images/main-img/hero-bg-img.png') }}');"></div>
 			</div>
 			<div class="profile-content">
 				<div class="profile-sec">
@@ -112,6 +141,13 @@
 						@if(!empty($user->airbnb))
 					<div class="social-icon-content-wrap">
 						<a href="{{ $user->airbnb }}" target="_blank"><i class="fab fa-airbnb  mx-2" style="font-size: 18px; font-weight: 700;"></i></a>
+					</div>
+				@endif
+				@if(!empty($user->pik))
+					<div class="social-icon-content-wrap">
+						<a href="{{ $user->pik }}" target="_blank">
+							<img src="https://upload.wikimedia.org/wikipedia/commons/4/42/OLX_New_Logo.png" alt="OLX" class="olx-icon" style="width: 30px; height: 30px; object-fit: contain;">
+						</a>
 					</div>
 				@endif
 				@if(!empty($user->instagram))
@@ -443,6 +479,9 @@
 					<a href="javascript:void(0)" class="scan-btn" data-bs-toggle="modal" onclick="sharePage()">
 						<img src="{{ asset('images/bottom-sec/share-icon.svg') }}" alt="share-icon">
 					</a>
+					<a href="javascript:void(0)" class="scan-btn" onclick="saveContact()">
+						<i class="fas fa-save" style="color: white; font-size: 24px;"></i>
+					</a>
 				@if(!empty($user->booking))
     <a href="{{ $user->booking }}" class="add-to-btn">
         <div class="add-to-btn-sec">
@@ -500,6 +539,7 @@
 	<script src="{{ asset('js/gallery.js') }}"></script>
 	<script src="{{ asset('js/cursor.js') }}"></script>
 	<script src="{{ asset('js/custom.js') }}"></script>
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 	<script>
 	function sharePage() {
 		if (navigator.share) {
@@ -511,6 +551,79 @@
 			navigator.clipboard.writeText(window.location.href);
 			alert('Link kopiran!');
 		}
+	}
+	function saveContact() {
+		// Get user data from PHP variables
+		const name = '{{ $user->name }}';
+		const title = '{{ $user->title ?? "" }}';
+		const phone = '{{ $user->phone_number ?? "" }}';
+		const officePhone = '{{ $user->office_number ?? "" }}';
+		const email = '{{ $user->email ?? "" }}';
+		const website = '{{ $user->website ?? "" }}';
+		const address = '{{ $user->office_address ?? "" }}';
+		const organization = title ? name + ' - ' + title : name;
+		
+		// Build vCard content
+		let vcard = 'BEGIN:VCARD\n';
+		vcard += 'VERSION:3.0\n';
+		vcard += 'FN:' + name + '\n';
+		vcard += 'N:' + name.split(' ').reverse().join(';') + ';;;\n';
+		
+		if (title) {
+			vcard += 'TITLE:' + title + '\n';
+		}
+		
+		if (organization) {
+			vcard += 'ORG:' + organization + '\n';
+		}
+		
+		if (phone) {
+			vcard += 'TEL;TYPE=CELL:' + phone.replace(/\s/g, '') + '\n';
+		}
+		
+		if (officePhone) {
+			vcard += 'TEL;TYPE=WORK:' + officePhone.replace(/\s/g, '') + '\n';
+		}
+		
+		if (email) {
+			vcard += 'EMAIL;TYPE=INTERNET:' + email + '\n';
+		}
+		
+		if (website) {
+			vcard += 'URL:' + website + '\n';
+		}
+		
+		if (address) {
+			vcard += 'ADR;TYPE=WORK:;;' + address + ';;;\n';
+		}
+		
+		vcard += 'NOTE:Digitalna business kartica\n';
+		vcard += 'END:VCARD';
+		
+		// Show SweetAlert first
+		Swal.fire({
+			icon: 'success',
+			title: 'Spremljeno!',
+			text: name + ' uspješno spašen u vaš imenik',
+			confirmButtonColor: '#289cdb',
+			confirmButtonText: 'OK',
+			timer: 1000,
+			timerProgressBar: true,
+			showConfirmButton: false
+		}).then(() => {
+			// Create blob and download after delay
+			setTimeout(() => {
+				const blob = new Blob([vcard], { type: 'text/vcard' });
+				const url = window.URL.createObjectURL(blob);
+				const link = document.createElement('a');
+				link.href = url;
+				link.download = name.replace(/\s/g, '_') + '.vcf';
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+				window.URL.revokeObjectURL(url);
+			}, 100);
+		});
 	}
 	</script>
 </body>
