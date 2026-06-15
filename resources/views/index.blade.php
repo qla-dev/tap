@@ -91,6 +91,9 @@
         .gallery-box .gallery-detail {
             display: none !important;
         }
+        .gallery-bottom .slick-list {
+            touch-action: pan-y;
+        }
         body.gallery-preview-open {
             position: fixed;
             left: 0;
@@ -588,6 +591,52 @@
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 	<script>
 	let galleryScrollY = 0;
+	let galleryTouchStartX = 0;
+	let galleryTouchStartY = 0;
+	let gallerySwipeDisabled = false;
+
+	const gallerySlider = document.querySelector('.gallery-bottom');
+
+	if (gallerySlider) {
+		gallerySlider.addEventListener('touchstart', function(event) {
+			const touch = event.touches && event.touches[0];
+
+			if (!touch) {
+				return;
+			}
+
+			galleryTouchStartX = touch.clientX;
+			galleryTouchStartY = touch.clientY;
+			gallerySwipeDisabled = false;
+		}, true);
+
+		gallerySlider.addEventListener('touchmove', function(event) {
+			const touch = event.touches && event.touches[0];
+
+			if (!touch || gallerySwipeDisabled) {
+				return;
+			}
+
+			const deltaX = Math.abs(touch.clientX - galleryTouchStartX);
+			const deltaY = Math.abs(touch.clientY - galleryTouchStartY);
+
+			if (deltaY > deltaX + 6) {
+				$('.gallery-bottom').slick('slickSetOption', 'swipe', false, false);
+				gallerySwipeDisabled = true;
+			}
+		}, true);
+
+		gallerySlider.addEventListener('touchend', resetGallerySwipe, true);
+		gallerySlider.addEventListener('touchcancel', resetGallerySwipe, true);
+	}
+
+	function resetGallerySwipe() {
+		if (gallerySwipeDisabled) {
+			$('.gallery-bottom').slick('slickSetOption', 'swipe', true, false);
+		}
+
+		gallerySwipeDisabled = false;
+	}
 
 	$(".img-zoom").magnificPopup({
 		type: "image",
