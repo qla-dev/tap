@@ -82,14 +82,14 @@
             background-size: cover;
         }
         .gallery-box .img-zoom {
-            position: absolute;
-            inset: 0;
-            z-index: 2;
             display: block;
-            height: 100%;
         }
+        .gallery-box .gallery-img:after {
+            display: none !important;
+        }
+        .gallery-box:hover .gallery-detail,
         .gallery-box .gallery-detail {
-            pointer-events: none;
+            display: none !important;
         }
         body.gallery-preview-open {
             position: fixed;
@@ -300,16 +300,13 @@
                             @foreach($user->gallery as $item)
                                 <div class="gallery-item">
                                     <div class="gallery-box">
-                                        <div
-                                            class="gallery-img gallery-bg"
-                                            role="img"
-                                            aria-label="{{ $item['alt'] ?? 'gallery' }}"
-                                            style="background-image: url('{{ $imageUrl($item['image']) }}');"
-                                        ></div>
                                         <a href="{{ $imageUrl($item['zoom']) }}" class="img-zoom w-100">
-                                            <div class="gallery-detail text-center">
-                                                <img src="{{ asset('svg/plus-icon.svg') }}" alt="plus-icon">
-                                            </div>
+                                            <div
+                                                class="gallery-img gallery-bg"
+                                                role="img"
+                                                aria-label="{{ $item['alt'] ?? 'gallery' }}"
+                                                style="background-image: url('{{ $imageUrl($item['image']) }}');"
+                                            ></div>
                                         </a>
                                     </div>
                                 </div>
