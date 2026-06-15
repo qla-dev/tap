@@ -45,6 +45,9 @@
 }
 
 .contact-content p {padding-bottom: 0!important;}
+        body {
+            max-width: 600px;
+        }
         a {
             color: #289cdb!important;
         }
@@ -90,9 +93,6 @@
         .gallery-box:hover .gallery-detail,
         .gallery-box .gallery-detail {
             display: none !important;
-        }
-        .gallery-bottom .slick-list {
-            touch-action: pan-y;
         }
         body.gallery-preview-open {
             position: fixed;
@@ -593,11 +593,14 @@
 	let galleryScrollY = 0;
 	let galleryTouchStartX = 0;
 	let galleryTouchStartY = 0;
-	let gallerySwipeDisabled = false;
+	let galleryTouchMoved = false;
+	let gallerySwipeHandled = false;
 
 	const gallerySlider = document.querySelector('.gallery-bottom');
 
 	if (gallerySlider) {
+		$('.gallery-bottom').slick('slickSetOption', 'swipe', false, false);
+
 		gallerySlider.addEventListener('touchstart', function(event) {
 			const touch = event.touches && event.touches[0];
 
@@ -607,35 +610,50 @@
 
 			galleryTouchStartX = touch.clientX;
 			galleryTouchStartY = touch.clientY;
-			gallerySwipeDisabled = false;
+			galleryTouchMoved = false;
+			gallerySwipeHandled = false;
 		}, true);
 
 		gallerySlider.addEventListener('touchmove', function(event) {
 			const touch = event.touches && event.touches[0];
 
-			if (!touch || gallerySwipeDisabled) {
+			if (!touch || gallerySwipeHandled) {
 				return;
 			}
 
-			const deltaX = Math.abs(touch.clientX - galleryTouchStartX);
-			const deltaY = Math.abs(touch.clientY - galleryTouchStartY);
+			const deltaX = touch.clientX - galleryTouchStartX;
+			const deltaY = touch.clientY - galleryTouchStartY;
+			const absX = Math.abs(deltaX);
+			const absY = Math.abs(deltaY);
 
-			if (deltaY > deltaX + 6) {
-				$('.gallery-bottom').slick('slickSetOption', 'swipe', false, false);
-				gallerySwipeDisabled = true;
+			if (absX > 28 || absY > 28) {
+				galleryTouchMoved = true;
+			}
+
+			if (absX > 34 && absX > absY * 0.35) {
+				event.preventDefault();
+				$('.gallery-bottom').slick(deltaX < 0 ? 'slickNext' : 'slickPrev');
+				gallerySwipeHandled = true;
 			}
 		}, true);
 
-		gallerySlider.addEventListener('touchend', resetGallerySwipe, true);
-		gallerySlider.addEventListener('touchcancel', resetGallerySwipe, true);
-	}
+		gallerySlider.addEventListener('click', function(event) {
+			if (!gallerySwipeHandled && !galleryTouchMoved) {
+				return;
+			}
 
-	function resetGallerySwipe() {
-		if (gallerySwipeDisabled) {
-			$('.gallery-bottom').slick('slickSetOption', 'swipe', true, false);
-		}
+			event.preventDefault();
+			event.stopPropagation();
+			gallerySwipeHandled = false;
+			galleryTouchMoved = false;
+		}, true);
 
-		gallerySwipeDisabled = false;
+		gallerySlider.addEventListener('touchend', function() {
+			window.setTimeout(function() {
+				gallerySwipeHandled = false;
+				galleryTouchMoved = false;
+			}, 300);
+		}, true);
 	}
 
 	$(".img-zoom").magnificPopup({
