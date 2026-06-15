@@ -1,5 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+@php
+    $imageUrl = function (?string $path): string {
+        if (empty($path)) {
+            return '';
+        }
+
+        if (preg_match('/^https?:\/\//i', $path)) {
+            return $path;
+        }
+
+        return 'https://tap.qla.dev/' . ltrim($path, '/');
+    };
+@endphp
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,13 +21,13 @@
     <meta name="keywords" content="business, kartica, digital, {{ $user->name }}, {{ $user->title }}">
     <meta property="og:title" content="{{ $user->name }} {{ $user->title }}">
     <meta property="og:description" content="{{ $user->about_me ? strip_tags($user->about_me) : 'Digitalna business kartica za ' . $user->name }}">
-    <meta property="og:image" content="{{ $user->profile_image ? asset($user->profile_image) : asset('images/main-img/profile.png') }}">
+    <meta property="og:image" content="{{ $user->profile_image ? $imageUrl($user->profile_image) : $imageUrl('images/main-img/profile.png') }}">
     <meta property="og:url" content="https://tap.qla.dev/{{ request()->route('name') }}">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $user->name }} {{ $user->title }}">
     <meta name="twitter:description" content="{{ $user->about_me ? strip_tags($user->about_me) : 'Digitalna business kartica za ' . $user->name }}">
-    <meta name="twitter:image" content="{{ $user->profile_image ? asset($user->profile_image) : asset('images/main-img/profile.png') }}">
+    <meta name="twitter:image" content="{{ $user->profile_image ? $imageUrl($user->profile_image) : $imageUrl('images/main-img/profile.png') }}">
     <link rel="icon" href="{{ asset('images/favicon/favicon.svg') }}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/all.min.css') }}">
@@ -22,7 +35,7 @@
     <link rel="stylesheet" href="{{ asset('css/magnific-popup.css') }}">
     <link rel="stylesheet" href="{{ asset('css/slick.css') }}">
     <link rel="stylesheet" href="{{ asset('css/cursor.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/style.css') }}?v=5">
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}?v=6">
     <link rel="stylesheet" href="{{ asset('css/media-query.css') }}?v=3">
     <style>
 
@@ -59,6 +72,39 @@
         }
         .social-icon-content-wrap:hover .olx-icon {
             filter: brightness(0) saturate(100%) invert(100%) sepia(100%) saturate(0%) hue-rotate(304deg) brightness(104%) contrast(102%) !important;
+        }
+        .gallery-box .gallery-bg {
+            aspect-ratio: 16 / 10;
+            width: 100%;
+            border-radius: 12px;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+        .gallery-box .img-zoom {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            display: block;
+            height: 100%;
+        }
+        .gallery-box .gallery-detail {
+            pointer-events: none;
+        }
+        body.gallery-preview-open {
+            position: fixed;
+            left: 0;
+            right: 0;
+            width: 100%;
+            overflow: hidden;
+            touch-action: none;
+        }
+        body.gallery-preview-open .site-content {
+            pointer-events: none;
+        }
+        body.gallery-preview-open .mfp-wrap,
+        body.gallery-preview-open .mfp-bg {
+            pointer-events: auto;
         }
     </style>
 </head>
@@ -103,12 +149,12 @@
 				</div>
 			</header>
 			<div class="hero-section">
-				<div class="bg-orange bg-img1" style="background-image: url('{{ $user->cover_image ? asset($user->cover_image) : asset('images/main-img/hero-bg-img.png') }}');"></div>
+				<div class="bg-orange bg-img1" style="background-image: url('{{ $user->cover_image ? $imageUrl($user->cover_image) : $imageUrl('images/main-img/hero-bg-img.png') }}');"></div>
 			</div>
 			<div class="profile-content">
 				<div class="profile-sec">
 					<div class="profile-img">
-						<div class="oval-frame" style="width:100px;height:100px;background-image:url('{{ $user->profile_image ? asset($user->profile_image) : asset('images/main-img/profile.png') }}');background-size:cover;background-position:center;border-radius:50%;"></div>
+						<div class="oval-frame" style="width:100px;height:100px;background-image:url('{{ $user->profile_image ? $imageUrl($user->profile_image) : $imageUrl('images/main-img/profile.png') }}');background-size:cover;background-position:center;border-radius:50%;"></div>
 					</div>
 					<div class="profile-name" style="margin-top: 20px;">
 						<h1 class="p-0">{{ $user->name }}</h1>
@@ -254,10 +300,13 @@
                             @foreach($user->gallery as $item)
                                 <div class="gallery-item">
                                     <div class="gallery-box">
-                                        <div class="gallery-img">
-                                            <img src="{{ asset($item['image']) }}" alt="{{ $item['alt'] ?? 'gallery' }}" class="w-100">
-                                        </div>
-                                        <a href="{{ asset($item['zoom']) }}" class="img-zoom w-100">
+                                        <div
+                                            class="gallery-img gallery-bg"
+                                            role="img"
+                                            aria-label="{{ $item['alt'] ?? 'gallery' }}"
+                                            style="background-image: url('{{ $imageUrl($item['image']) }}');"
+                                        ></div>
+                                        <a href="{{ $imageUrl($item['zoom']) }}" class="img-zoom w-100">
                                             <div class="gallery-detail text-center">
                                                 <img src="{{ asset('svg/plus-icon.svg') }}" alt="plus-icon">
                                             </div>
@@ -519,7 +568,7 @@
 					<div class="modal-body">
 						<div class="scan-content">
 							<div class="scanner">
-								<img src="{{ asset('images/clients/' . strtolower($user->name) . '/qr.svg') }}" alt="scanner-img" class="">
+								<img src="{{ $imageUrl('images/clients/' . strtolower($user->name) . '/qr.svg') }}" alt="scanner-img" class="">
 							</div>
 						</div>
 					</div>
@@ -541,6 +590,31 @@
 	<script src="{{ asset('js/custom.js') }}"></script>
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 	<script>
+	let galleryScrollY = 0;
+
+	$(".img-zoom").magnificPopup({
+		type: "image",
+		closeOnContentClick: true,
+		mainClass: "mfp-fade",
+		gallery: {
+			enabled: true,
+			navigateByImgClick: true,
+			preload: [0, 1]
+		},
+		callbacks: {
+			open: function() {
+				galleryScrollY = window.scrollY || window.pageYOffset;
+				document.body.style.top = `-${galleryScrollY}px`;
+				document.body.classList.add("gallery-preview-open");
+			},
+			close: function() {
+				document.body.classList.remove("gallery-preview-open");
+				document.body.style.top = "";
+				window.scrollTo(0, galleryScrollY);
+			}
+		}
+	});
+
 	function sharePage() {
 		if (navigator.share) {
 			navigator.share({
