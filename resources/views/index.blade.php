@@ -35,7 +35,7 @@
     <link rel="stylesheet" href="{{ asset('css/magnific-popup.css') }}">
     <link rel="stylesheet" href="{{ asset('css/slick.css') }}">
     <link rel="stylesheet" href="{{ asset('css/cursor.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/style.css') }}?v=6">
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}?v=7">
     <link rel="stylesheet" href="{{ asset('css/media-query.css') }}?v=3">
     <style>
 
