@@ -304,12 +304,16 @@
                                 <div class="gallery-item">
                                     <div class="gallery-box">
                                         <a href="{{ $imageUrl($item['zoom']) }}" class="img-zoom w-100">
-                                            <div
-                                                class="gallery-img gallery-bg"
-                                                role="img"
-                                                aria-label="{{ $item['alt'] ?? 'gallery' }}"
-                                                style="background-image: url('{{ $imageUrl($item['image']) }}');"
-                                            ></div>
+                                            <div class="gallery-img gallery-bg">
+                                                <img
+                                                    data-lazy="{{ $imageUrl($item['image']) }}"
+                                                    src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
+                                                    alt="{{ $item['alt'] ?? 'gallery' }}"
+                                                    loading="lazy"
+                                                    decoding="async"
+                                                    fetchpriority="low"
+                                                >
+                                            </div>
                                         </a>
                                     </div>
                                 </div>

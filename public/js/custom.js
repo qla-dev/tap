@@ -39,6 +39,7 @@ $('.gallery-bottom').slick({
   arrows: false,
   infinite:false,
   autoplay:true,
+  lazyLoad: 'ondemand',
   speed: 300,
   slidesToShow: 2,
   slidesToScroll: 1,

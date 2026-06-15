@@ -1145,6 +1145,10 @@ blockquote h3{
 	overflow: hidden;
 }
 .gallery-box .gallery-img > img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
 	transition: all 0.3s cubic-bezier(0.3, 0.1, 0.58, 1);
 }
 .gallery-box .gallery-img:after {
@@ -1356,4 +1360,3 @@ button.btn-close {
 		border-radius: 50%;
 	}
 }
-
