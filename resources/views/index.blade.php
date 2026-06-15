@@ -595,6 +595,9 @@
 	let galleryTouchStartY = 0;
 	let galleryTouchMoved = false;
 	let gallerySwipeHandled = false;
+	let previewTouchStartX = 0;
+	let previewTouchStartY = 0;
+	let previewSwipeHandled = false;
 
 	const gallerySlider = document.querySelector('.gallery-bottom');
 
@@ -670,6 +673,7 @@
 				galleryScrollY = window.scrollY || window.pageYOffset;
 				document.body.style.top = `-${galleryScrollY}px`;
 				document.body.classList.add("gallery-preview-open");
+				bindPreviewSwipe();
 			},
 			close: function() {
 				document.body.classList.remove("gallery-preview-open");
@@ -678,6 +682,53 @@
 			}
 		}
 	});
+
+	function bindPreviewSwipe() {
+		const previewWrap = document.querySelector('.mfp-wrap');
+
+		if (!previewWrap || previewWrap.dataset.swipeBound === 'true') {
+			return;
+		}
+
+		previewWrap.dataset.swipeBound = 'true';
+
+		previewWrap.addEventListener('touchstart', function(event) {
+			const touch = event.touches && event.touches[0];
+
+			if (!touch) {
+				return;
+			}
+
+			previewTouchStartX = touch.clientX;
+			previewTouchStartY = touch.clientY;
+			previewSwipeHandled = false;
+		}, true);
+
+		previewWrap.addEventListener('touchmove', function(event) {
+			const touch = event.touches && event.touches[0];
+
+			if (!touch || previewSwipeHandled) {
+				return;
+			}
+
+			const deltaX = touch.clientX - previewTouchStartX;
+			const deltaY = touch.clientY - previewTouchStartY;
+			const absX = Math.abs(deltaX);
+			const absY = Math.abs(deltaY);
+
+			if (absX > 42 && absX > absY * 0.45) {
+				event.preventDefault();
+				$.magnificPopup.instance[deltaX < 0 ? 'next' : 'prev']();
+				previewSwipeHandled = true;
+			}
+		}, true);
+
+		previewWrap.addEventListener('touchend', function() {
+			window.setTimeout(function() {
+				previewSwipeHandled = false;
+			}, 250);
+		}, true);
+	}
 
 	function sharePage() {
 		if (navigator.share) {
