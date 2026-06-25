@@ -52,6 +52,7 @@ class User extends Authenticatable
         'pik',
         'booking',
         'reviews',
+        'google_redirect',
     ];
 
     /**
@@ -76,6 +77,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'gallery' => 'array',
             'work_hours' => 'array',
+            'google_redirect' => 'boolean',
         ];
     }
 }

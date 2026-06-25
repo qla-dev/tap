@@ -17,6 +17,10 @@ class UserController extends Controller
             return response()->json(['error' => 'User not found'], 404);
         }
 
+        if ($user->google_redirect && !empty($user->reviews)) {
+            return redirect()->away($user->reviews);
+        }
+
         return view('index', ['user' => $user]);
     }
 }
