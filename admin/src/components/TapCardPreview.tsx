@@ -389,12 +389,12 @@ export default function TapCardPreview({ profile, isStandalone = false }: TapCar
               {profile.gallery.map((img, i) => (
                 <div 
                   key={i} 
-                  onClick={() => setActivePhoto(img)}
+                  onClick={() => setActivePhoto(img.zoom || img.image)}
                   className="aspect-square bg-slate-900 rounded-xl overflow-hidden border border-slate-850 hover:border-slate-700 transition-all cursor-pointer group"
                 >
                   <img 
-                    src={mediaUrl(img)}
-                    alt={`Gallery ${i}`} 
+                    src={mediaUrl(img.image)}
+                    alt={img.alt || `Gallery ${i + 1}`}
                     className="w-full h-full object-cover group-hover:scale-110 transition-all duration-300" 
                     referrerPolicy="no-referrer"
                   />

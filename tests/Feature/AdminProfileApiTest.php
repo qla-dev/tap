@@ -16,7 +16,11 @@ class AdminProfileApiTest extends TestCase
             'name' => 'Example Company',
             'slug' => 'example-company',
             'email' => 'example@company.test',
-            'gallery' => ['https://example.test/gallery.jpg'],
+            'gallery' => [[
+                'image' => 'https://example.test/gallery.jpg',
+                'zoom' => 'https://example.test/gallery-large.jpg',
+                'alt' => 'Gallery image',
+            ]],
             'testimonials' => [],
             'services' => [],
             'google_redirect' => false,

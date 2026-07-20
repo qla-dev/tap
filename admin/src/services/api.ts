@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { TapProfile, ParsedTapProfile, Testimonial, Service } from '../types';
+import { TapProfile, ParsedTapProfile, Testimonial, Service, GalleryItem } from '../types';
 
 // Initial high-fidelity template for the "mi-store" digital card
 const INITIAL_PROFILES: TapProfile[] = [
@@ -163,12 +163,32 @@ const INITIAL_PROFILES: TapProfile[] = [
 ];
 
 export const parseProfile = (p: TapProfile): ParsedTapProfile => {
-  let gallery: string[] = [];
+  let gallery: GalleryItem[] = [];
   let testimonials: Testimonial[] = [];
   let services: Service[] = [];
 
   try {
-    gallery = Array.isArray(p.gallery) ? p.gallery : (p.gallery ? JSON.parse(p.gallery) : []);
+    const rawGallery: unknown = Array.isArray(p.gallery) ? p.gallery : (p.gallery ? JSON.parse(p.gallery) : []);
+    const galleryEntries = Array.isArray(rawGallery) ? rawGallery : [rawGallery];
+    gallery = galleryEntries.flatMap((entry, index) => {
+      if (typeof entry === 'string') {
+        return [{ image: entry, zoom: entry, alt: `Gallery image ${index + 1}` }];
+      }
+
+      if (entry && typeof entry === 'object') {
+        const item = entry as Record<string, unknown>;
+        const image = [item.image, item.src, item.url, item.zoom].find(value => typeof value === 'string');
+        if (typeof image === 'string') {
+          return [{
+            image,
+            zoom: typeof item.zoom === 'string' ? item.zoom : image,
+            alt: typeof item.alt === 'string' ? item.alt : `Gallery image ${index + 1}`,
+          }];
+        }
+      }
+
+      return [];
+    });
   } catch (e) {
     console.error("Error parsing gallery JSON", e);
   }
@@ -304,7 +324,7 @@ export const generateSqlInsert = (p: ParsedTapProfile): string => {
     dbProfile.cover_image ? escapeSqlString(dbProfile.cover_image) : 'NULL',
     dbProfile.title ? escapeSqlString(dbProfile.title) : 'NULL',
     dbProfile.about_me ? escapeSqlString(dbProfile.about_me) : 'NULL',
-    escapeSqlString(dbProfile.gallery),
+    escapeSqlString(typeof dbProfile.gallery === 'string' ? dbProfile.gallery : JSON.stringify(dbProfile.gallery)),
     dbProfile.map_location ? escapeSqlString(dbProfile.map_location) : 'NULL',
     escapeSqlString(dbProfile.testimonials),
     escapeSqlString(dbProfile.services),

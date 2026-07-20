@@ -17,6 +17,12 @@ export interface Service {
   icon?: string; // Lucide icon name
 }
 
+export interface GalleryItem {
+  image: string;
+  zoom?: string;
+  alt?: string;
+}
+
 export interface TapProfile {
   id: number; // bigint(20) UNSIGNED
   name: string;
@@ -34,7 +40,7 @@ export interface TapProfile {
   cover_image: string | null;
   title: string | null;
   about_me: string | null;
-  gallery: string | null; // JSON string of string[] (image URLs)
+  gallery: string | GalleryItem[] | null; // JSON from Laravel or decoded API data
   map_location: string | null; // maps embed URL or iframe code
   testimonials: string | null; // JSON string of Testimonial[]
   services: string | null; // JSON string of Service[]
@@ -65,7 +71,7 @@ export interface TapProfile {
 
 // Helper structures for UI parsing
 export interface ParsedTapProfile extends Omit<TapProfile, 'gallery' | 'testimonials' | 'services'> {
-  gallery: string[];
+  gallery: GalleryItem[];
   testimonials: Testimonial[];
   services: Service[];
 }

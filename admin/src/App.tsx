@@ -109,9 +109,11 @@ export default function App() {
       cover_image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80",
       title: "Title / Job Role",
       about_me: "Write a short elegant greeting or store summary here...",
-      gallery: [
-        "https://images.unsplash.com/photo-1542744094-3a31f103e35f?w=600&auto=format&fit=crop&q=80"
-      ],
+      gallery: [{
+        image: "https://images.unsplash.com/photo-1542744094-3a31f103e35f?w=600&auto=format&fit=crop&q=80",
+        zoom: "https://images.unsplash.com/photo-1542744094-3a31f103e35f?w=1200&auto=format&fit=crop&q=85",
+        alt: "Gallery image 1",
+      }],
       map_location: null,
       testimonials: [
         { name: "John Client", text: "Exceptional quality and professional workflow!", rating: 5 }
@@ -277,7 +279,11 @@ export default function App() {
     if (!activeProfile) return;
     const url = prompt("Enter complete image URL:");
     if (url) {
-      handleInputChange('gallery', [...activeProfile.gallery, url]);
+      handleInputChange('gallery', [...activeProfile.gallery, {
+        image: url,
+        zoom: url,
+        alt: `Gallery image ${activeProfile.gallery.length + 1}`,
+      }]);
     }
   };
 
@@ -1068,9 +1074,9 @@ export default function App() {
                     </div>
 
                     <div className="grid grid-cols-4 gap-3">
-                      {activeProfile.gallery.map((url, i) => (
+                      {activeProfile.gallery.map((item, i) => (
                         <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-slate-800 bg-slate-900 group">
-                          <img src={mediaUrl(url)} alt={`Gallery item ${i}`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          <img src={mediaUrl(item.image)} alt={item.alt || `Gallery item ${i + 1}`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                           <button
                             onClick={() => handleRemoveGalleryUrl(i)}
                             className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-rose-400 hover:text-rose-300 font-semibold text-xs transition-all cursor-pointer"
