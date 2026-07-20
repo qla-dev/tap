@@ -310,6 +310,13 @@ export default function App() {
     setViewMode('split');
   };
 
+  const handleSelectProfile = (id: number) => {
+    setActiveProfileId(id);
+    setActiveTab('identity');
+    setWorkspaceView('editor');
+    setViewMode('split');
+  };
+
   const quickActions = [
     { id: 'identity', label: 'Identity & Branding', description: 'Update the logo, cover, profile name, URL slug, and core brand details.', icon: Sliders, iconClass: 'bg-blue-500/15 text-blue-400' },
     { id: 'contact', label: 'Contact Details', description: 'Manage phone numbers, email, office address, website, and map location.', icon: MapPin, iconClass: 'bg-emerald-500/15 text-emerald-400' },
@@ -497,12 +504,20 @@ export default function App() {
                   return (
                     <div
                       key={p.id}
-                      onClick={() => { setActiveProfileId(p.id); setWorkspaceView('editor'); }}
+                      onClick={() => handleSelectProfile(p.id)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          handleSelectProfile(p.id);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
                       title={sidebarCollapsed ? p.name : undefined}
-                      className={`group ${sidebarCollapsed ? 'p-2 justify-center' : 'p-3 justify-between'} rounded-xl border transition-all flex items-center cursor-pointer ${
+                      className={`group ${sidebarCollapsed ? 'p-2 justify-center' : 'p-3 justify-between'} rounded-xl transition-all flex items-center cursor-pointer outline-none focus:bg-slate-800 ${
                         isActive
-                          ? 'bg-slate-800/80 border-slate-700/80 shadow-md ring-1 ring-slate-750'
-                          : 'bg-slate-950/40 border-slate-850 hover:bg-slate-900 hover:border-slate-800'
+                          ? 'bg-slate-800/80 shadow-sm'
+                          : 'bg-slate-950/40 hover:bg-slate-800/60'
                       }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
@@ -510,7 +525,7 @@ export default function App() {
                           <img 
                             src={mediaUrl(p.profile_image)}
                             alt={p.name} 
-                            className="w-9 h-9 rounded-lg object-cover shrink-0 border border-slate-800" 
+                            className="w-9 h-9 rounded-lg object-cover shrink-0"
                             referrerPolicy="no-referrer"
                           />
                         ) : (
