@@ -437,35 +437,7 @@ export default function App() {
               </button>
             </div>
             
-            {/* Bento Quick Metrics */}
-            {!sidebarCollapsed ? (
-            <div className="p-4 border-b border-slate-800 bg-slate-950/20">
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-850">
-                  <div className="text-slate-500 text-[10px] font-mono font-bold tracking-wider uppercase mb-1">TOTAL TAPS</div>
-                  <div className="font-display font-bold text-xl text-white flex items-baseline gap-1.5">
-                    {profiles.length}
-                    <span className="text-xs font-normal text-slate-500">cards</span>
-                  </div>
-                </div>
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-850">
-                  <div className="text-slate-500 text-[10px] font-mono font-bold tracking-wider uppercase mb-1">GLOBAL VIEWS</div>
-                  <div className="font-display font-bold text-xl text-indigo-400 flex items-baseline gap-1.5">
-                    {profiles.reduce((sum, p) => sum + p.views, 0)}
-                    <span className="text-xs font-normal text-slate-500">hits</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Add New Profile Link */}
-              <button
-                onClick={handleCreateProfile}
-                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-900/10 cursor-pointer active:scale-98 transition-all"
-              >
-                <Plus className="w-4 h-4" /> Create New Profile
-              </button>
-            </div>
-            ) : (
+            {sidebarCollapsed && (
               <div className="p-3 border-b border-slate-800 flex flex-col items-center gap-2">
                 <button
                   onClick={() => setWorkspaceView('home')}
@@ -572,11 +544,16 @@ export default function App() {
               </div>
             </div>
 
-            {/* Quick Helper Tip in sidebar footer */}
-            {!sidebarCollapsed && <div className="p-4 mt-auto border-t border-slate-800 bg-slate-950/40 text-[10px] text-slate-500 leading-relaxed font-mono">
-              <span className="font-semibold block text-slate-400 mb-1">PROTOTYPE SYNC MODE</span>
-              Changes are synchronized with the Laravel profile API.
-            </div>}
+            {!sidebarCollapsed && (
+              <div className="p-4 mt-auto border-t border-slate-800 bg-slate-950/40">
+                <button
+                  onClick={handleCreateProfile}
+                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-900/10 cursor-pointer active:scale-98 transition-all"
+                >
+                  <Plus className="w-4 h-4" /> Create New Profile
+                </button>
+              </div>
+            )}
           </aside>
         )}
 

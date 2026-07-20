@@ -11,7 +11,8 @@ Route::get('/admin/{path?}', function () {
 })->where('path', '.*')->name('admin.app');
 
 Route::post('/{name}/count-views', [App\Http\Controllers\UserController::class, 'countViews'])
-    ->where('name', '^(?!admin$|api$|up$)[A-Za-z0-9_-]+$');
+    ->where('name', '^(?!admin$|api$|up$)[A-Za-z0-9_-]+$')
+    ->name('profiles.count-views');
 
 Route::get('/{name}', [App\Http\Controllers\UserController::class, 'show'])
     ->where('name', '^(?!admin$|api$|up$)[A-Za-z0-9_-]+$');

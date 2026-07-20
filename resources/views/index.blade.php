@@ -16,6 +16,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title> {{ $user->name }} {{ $user->title }} | tap.qla.dev - Digitalne Business Kartice</title>
     <meta name="description" content="{{ $user->about_me ? strip_tags($user->about_me) : 'Digitalna business kartica za ' . $user->name }}">
     <meta name="keywords" content="business, kartica, digital, {{ $user->name }}, {{ $user->title }}">
@@ -594,6 +595,21 @@
 	<script src="{{ asset('js/custom.js') }}"></script>
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 	<script>
+	window.addEventListener('load', function () {
+		fetch(@json(route('profiles.count-views', ['name' => request()->route('name')])), {
+			method: 'POST',
+			credentials: 'same-origin',
+			keepalive: true,
+			headers: {
+				'Accept': 'application/json',
+				'X-Requested-With': 'XMLHttpRequest',
+				'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+			}
+		}).catch(function (error) {
+			console.warn('Unable to record profile view', error);
+		});
+	});
+
 	let galleryScrollY = 0;
 	let galleryTouchStartX = 0;
 	let galleryTouchStartY = 0;

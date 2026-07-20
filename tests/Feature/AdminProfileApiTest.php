@@ -61,4 +61,19 @@ class AdminProfileApiTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $profile->id, 'views' => 4]);
         $this->postJson('/admin/count-views')->assertNotFound();
     }
+
+    public function test_public_profile_page_triggers_its_view_counter(): void
+    {
+        User::factory()->create([
+            'name' => 'Public Profile',
+            'slug' => 'public-profile',
+            'views' => 0,
+            'gallery' => [],
+        ]);
+
+        $this->get('/public-profile')
+            ->assertOk()
+            ->assertSee('public-profile\/count-views', false)
+            ->assertSee('X-CSRF-TOKEN', false);
+    }
 }
