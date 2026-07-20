@@ -23,6 +23,8 @@ export interface GalleryItem {
   alt?: string;
 }
 
+export type WorkHours = Record<string, string>;
+
 export interface TapProfile {
   id: number; // bigint(20) UNSIGNED
   name: string;
@@ -54,24 +56,25 @@ export interface TapProfile {
   airbnb: string | null;
   google: string | null;
   pik: string | null;
-  office_hours_monday: string | null;
-  office_hours_tuesday: string | null;
-  office_hours_wednesday: string | null;
-  office_hours_thursday: string | null;
-  office_hours_friday: string | null;
-  office_hours_saturday: string | null;
-  office_hours_sunday: string | null;
+  office_hours_monday?: string | null;
+  office_hours_tuesday?: string | null;
+  office_hours_wednesday?: string | null;
+  office_hours_thursday?: string | null;
+  office_hours_friday?: string | null;
+  office_hours_saturday?: string | null;
+  office_hours_sunday?: string | null;
   website: string | null;
   directions: string | null;
   reviews: string | null;
-  work_hours: string | null; // General note
+  work_hours: string | WorkHours | null;
   views: number;
   google_redirect: boolean | number; // 0 or 1
 }
 
 // Helper structures for UI parsing
-export interface ParsedTapProfile extends Omit<TapProfile, 'gallery' | 'testimonials' | 'services'> {
+export interface ParsedTapProfile extends Omit<TapProfile, 'gallery' | 'testimonials' | 'services' | 'work_hours'> {
   gallery: GalleryItem[];
   testimonials: Testimonial[];
   services: Service[];
+  work_hours: WorkHours;
 }

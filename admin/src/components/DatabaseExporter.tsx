@@ -83,20 +83,11 @@ return new class extends Migration {
             $table->text('google')->nullable();
             $table->string('pik')->nullable();
             
-            // Office Hours
-            $table->string('office_hours_monday')->nullable();
-            $table->string('office_hours_tuesday')->nullable();
-            $table->string('office_hours_wednesday')->nullable();
-            $table->string('office_hours_thursday')->nullable();
-            $table->string('office_hours_friday')->nullable();
-            $table->string('office_hours_saturday')->nullable();
-            $table->string('office_hours_sunday')->nullable();
-            
             // External Links & Metrics
             $table->string('website')->nullable();
             $table->string('directions')->nullable();
             $table->string('reviews')->nullable();
-            $table->text('work_hours')->nullable();
+            $table->json('work_hours')->nullable();
             $table->integer('views')->default(0);
             $table->boolean('google_redirect')->default(false);
         });

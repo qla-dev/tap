@@ -1,6 +1,6 @@
 {
-  "name": "QLA Tap CMS & NFC Dashboard",
-  "short_name": "QLA Tap",
+  "name": "qla.dev TAP",
+  "short_name": "qla.dev TAP",
   "description": "Manage digital business cards, generate QR codes, and program physical NFC tags.",
   "start_url": "/admin/",
   "scope": "/admin/",

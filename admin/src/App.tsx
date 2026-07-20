@@ -8,7 +8,7 @@ import {
   Database, Nfc, Smartphone, Settings, Plus, Search, 
   Trash2, Copy, Check, Sparkles, Sliders, MapPin, 
   Clock, Share2, Eye, ShieldCheck, Heart, AlertTriangle, 
-  SmartphoneNfc, Info, Wifi, WifiOff, Download, Code,
+  Info, Wifi, WifiOff, Download, Code,
   Wrench, Home, MessageSquare, ChevronRight, Play, ExternalLink,
   Facebook, Instagram, Linkedin, Twitter, Youtube, ChevronLeft, LayoutDashboard
 } from 'lucide-react';
@@ -19,18 +19,20 @@ import NfcProgrammer from './components/NfcProgrammer';
 import DatabaseExporter from './components/DatabaseExporter';
 import { mediaUrl } from './utils/media';
 
+const WORK_DAYS = ['Ponedjeljak', 'Utorak', 'Srijeda', 'Četvrtak', 'Petak', 'Subota', 'Nedjelja'] as const;
+
 export default function App() {
   const [profiles, setProfiles] = useState<ParsedTapProfile[]>([]);
   const [activeProfileId, setActiveProfileId] = useState<number>(1);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'identity' | 'contact' | 'hours' | 'socials' | 'content' | 'developer'>('identity');
+  const [activeTab, setActiveTab] = useState<'identity' | 'gallery' | 'google' | 'hours' | 'socials' | 'developer'>('identity');
   
   // PWA & Browser Status State
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
-  const [viewMode, setViewMode] = useState<'split' | 'fullscreen'>('split');
+  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const [workspaceView, setWorkspaceView] = useState<'home' | 'editor'>('home');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -130,18 +132,19 @@ export default function App() {
       booking: null,
       airbnb: null,
       google: null,
-      pik: `PK-${Math.floor(1000 + Math.random() * 9000)}`,
-      office_hours_monday: "09:00 AM - 05:00 PM",
-      office_hours_tuesday: "09:00 AM - 05:00 PM",
-      office_hours_wednesday: "09:00 AM - 05:00 PM",
-      office_hours_thursday: "09:00 AM - 05:00 PM",
-      office_hours_friday: "09:00 AM - 05:00 PM",
-      office_hours_saturday: "Closed",
-      office_hours_sunday: "Closed",
+      pik: "https://olx.ba/",
       website: null,
       directions: null,
       reviews: null,
-      work_hours: "Standard working hours.",
+      work_hours: {
+        Ponedjeljak: "09:00 - 17:00",
+        Utorak: "09:00 - 17:00",
+        Srijeda: "09:00 - 17:00",
+        Četvrtak: "09:00 - 17:00",
+        Petak: "09:00 - 17:00",
+        Subota: "Zatvoreno",
+        Nedjelja: "Zatvoreno",
+      },
       views: 0,
       google_redirect: 0
     };
@@ -313,22 +316,22 @@ export default function App() {
   const openEditor = (tab: typeof activeTab) => {
     setActiveTab(tab);
     setWorkspaceView('editor');
-    setViewMode('split');
+    setViewMode('edit');
   };
 
   const handleSelectProfile = (id: number) => {
     setActiveProfileId(id);
     setActiveTab('identity');
     setWorkspaceView('editor');
-    setViewMode('split');
+    setViewMode('edit');
   };
 
   const quickActions = [
-    { id: 'identity', label: 'Identity & Branding', description: 'Update the logo, cover, profile name, URL slug, and core brand details.', icon: Sliders, iconClass: 'bg-blue-500/15 text-blue-400' },
-    { id: 'contact', label: 'Contact Details', description: 'Manage phone numbers, email, office address, website, and map location.', icon: MapPin, iconClass: 'bg-emerald-500/15 text-emerald-400' },
+    { id: 'identity', label: 'Identity & Branding', description: 'Update the profile name, URL slug, email, slogan, and core brand details.', icon: Sliders, iconClass: 'bg-blue-500/15 text-blue-400' },
+    { id: 'gallery', label: 'Gallery', description: 'Manage profile and cover images, gallery items, services, and testimonials.', icon: Sparkles, iconClass: 'bg-emerald-500/15 text-emerald-400' },
+    { id: 'google', label: 'Google', description: 'Configure location, embedded map, directions, business page, and reviews.', icon: MapPin, iconClass: 'bg-rose-500/15 text-rose-400' },
     { id: 'hours', label: 'Working Hours', description: 'Set the weekly opening schedule and additional availability information.', icon: Clock, iconClass: 'bg-amber-500/15 text-amber-400' },
-    { id: 'socials', label: 'Socials & Links', description: 'Connect social profiles, booking pages, reviews, and external actions.', icon: Share2, iconClass: 'bg-violet-500/15 text-violet-400' },
-    { id: 'content', label: 'Media & Services', description: 'Curate gallery images, services, testimonials, and rich profile content.', icon: Sparkles, iconClass: 'bg-rose-500/15 text-rose-400' },
+    { id: 'socials', label: 'Social & Contact', description: 'Connect contact details, social profiles, booking pages, and partner ID.', icon: Share2, iconClass: 'bg-violet-500/15 text-violet-400' },
     { id: 'developer', label: 'Developer & NFC', description: 'Export profile data, inspect integration details, and program NFC tags.', icon: Code, iconClass: 'bg-orange-500/15 text-orange-400' },
   ] as const;
 
@@ -337,14 +340,17 @@ export default function App() {
       
       {/* HEADER SECTION (PWA & STATUS CONTROL BAR) */}
       <header className="bg-slate-900 border-b border-slate-800 px-6 py-3.5 shrink-0 flex items-center justify-between z-30">
-        <button onClick={() => { setWorkspaceView('home'); setViewMode('split'); }} className="flex items-center gap-3 text-left cursor-pointer" title="Open dashboard home">
-          <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-            <SmartphoneNfc className="w-5.5 h-5.5 text-white animate-pulse" />
-          </div>
+        <button onClick={() => { setWorkspaceView('home'); setViewMode('edit'); }} className="flex items-center gap-3 text-left cursor-pointer" title="Open dashboard home">
+          <img
+            src="https://deklarant.ai/build/images/logo-qla-dark.png"
+            alt="qla.dev"
+            className="h-9 w-auto max-w-[132px] object-contain"
+            referrerPolicy="no-referrer"
+          />
+          <div className="h-7 w-px bg-slate-700" />
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-display font-bold text-lg text-white">QLA Tap CMS</span>
-              <span className="px-2 py-0.5 bg-slate-800 border border-slate-700 rounded text-[10px] font-mono text-slate-400">TABLET EDITION</span>
+              <span className="font-display font-bold text-lg tracking-[0.16em] text-white">TAP</span>
             </div>
             <p className="text-xs text-slate-400">Digital Business Cards & NFC Programmer Hub</p>
           </div>
@@ -395,17 +401,17 @@ export default function App() {
           {/* View Mode Toggle */}
           <div className="bg-slate-950 rounded-lg p-0.5 border border-slate-800 flex text-xs">
             <button
-              onClick={() => setViewMode('split')}
+              onClick={() => setViewMode('edit')}
               className={`px-3 py-1 rounded-md font-medium transition-all cursor-pointer ${
-                viewMode === 'split' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200'
+                viewMode === 'edit' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              Split View
+              Edit Mode
             </button>
             <button
-              onClick={() => { setWorkspaceView('editor'); setViewMode('fullscreen'); }}
+              onClick={() => { setWorkspaceView('editor'); setViewMode('preview'); }}
               className={`px-3 py-1 rounded-md font-medium transition-all cursor-pointer ${
-                viewMode === 'fullscreen' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200'
+                viewMode === 'preview' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               Preview Mode
@@ -418,7 +424,7 @@ export default function App() {
       <div className="flex-grow flex overflow-hidden">
         
         {/* COLUMN 1: SIDEBAR (PROFILES & ANALYTICS DIRECTORY) */}
-        {viewMode === 'split' && (
+        {viewMode === 'edit' && (
           <aside className={`${sidebarCollapsed ? 'w-[76px]' : 'w-80'} bg-slate-900 border-r border-slate-800 flex flex-col shrink-0 overflow-hidden transition-[width] duration-300 ease-out`}>
 
             <div className={`h-12 border-b border-slate-800 flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between px-4'} shrink-0`}>
@@ -558,12 +564,12 @@ export default function App() {
         )}
 
         {/* DASHBOARD HOME: QUICK ACTION LANDING */}
-        {viewMode === 'split' && workspaceView === 'home' && (
+        {viewMode === 'edit' && workspaceView === 'home' && (
           <main className="flex-grow overflow-y-auto bg-[#171717] px-8 py-10 lg:px-16 lg:py-14 scrollbar">
             <div className="max-w-[1180px] mx-auto min-h-full flex flex-col justify-center">
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5 mb-7">
                 <div>
-                  <p className="text-xs font-mono font-semibold tracking-[0.18em] uppercase text-slate-500 mb-3">QLA Tap workspace</p>
+                  <p className="text-xs font-mono font-semibold tracking-[0.18em] uppercase text-slate-500 mb-3">qla.dev TAP workspace</p>
                   <h1 className="font-sans text-4xl lg:text-[44px] font-normal tracking-[-0.035em] text-slate-100">Manage your digital profiles</h1>
                   <p className="text-sm text-slate-500 mt-3">Choose a quick option to update {activeProfile?.name || 'a profile'}.</p>
                 </div>
@@ -608,17 +614,17 @@ export default function App() {
         )}
 
         {/* COLUMN 2: RICH CMS FORM EDITORS */}
-        {viewMode === 'split' && workspaceView === 'editor' && activeProfile && (
+        {viewMode === 'edit' && workspaceView === 'editor' && activeProfile && (
           <main className="flex-grow bg-slate-950 border-r border-slate-800 flex flex-col overflow-hidden">
             
             {/* Section tabs header */}
             <div className="bg-slate-900 border-b border-slate-800 px-6 py-2.5 shrink-0 flex gap-2 overflow-x-auto scrollbar">
               {[
                 { id: 'identity', label: 'Identity', icon: Sliders },
-                { id: 'contact', label: 'Contact', icon: MapPin },
+                { id: 'gallery', label: 'Gallery', icon: Sparkles },
+                { id: 'google', label: 'Google', icon: MapPin },
                 { id: 'hours', label: 'Work Hours', icon: Clock },
-                { id: 'socials', label: 'Socials & Links', icon: Share2 },
-                { id: 'content', label: 'Media & Services', icon: Sparkles },
+                { id: 'socials', label: 'Social', icon: Share2 },
                 { id: 'developer', label: 'Developer Sync & NFC', icon: Code },
               ].map(tab => {
                 const Icon = tab.icon;
@@ -648,12 +654,12 @@ export default function App() {
                 <div className="space-y-4">
                   <div className="border-b border-slate-850 pb-2 mb-4">
                     <h3 className="font-display font-semibold text-base text-white">Identity & Branding</h3>
-                    <p className="text-xs text-slate-500">Configure core metadata, URL routing, and security credentials</p>
+                    <p className="text-xs text-slate-500">Configure core profile metadata, branding, and the public URL.</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">NAME (MySQL: name)</label>
+                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">NAME</label>
                       <input
                         type="text"
                         value={activeProfile.name}
@@ -662,7 +668,7 @@ export default function App() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">URL SLUG (MySQL: slug)</label>
+                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">URL SLUG</label>
                       <input
                         type="text"
                         value={activeProfile.slug}
@@ -675,9 +681,9 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div>
                     <div>
-                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">EMAIL (MySQL: email)</label>
+                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">EMAIL</label>
                       <input
                         type="email"
                         value={activeProfile.email}
@@ -685,20 +691,10 @@ export default function App() {
                         className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2.5 rounded-xl text-sm font-mono"
                       />
                     </div>
-                    <div>
-                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">PASSWORD (MySQL: password)</label>
-                      <input
-                        type="password"
-                        placeholder="••••••••"
-                        value={activeProfile.password || ''}
-                        onChange={(e) => handleInputChange('password', e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2.5 rounded-xl text-sm font-mono"
-                      />
-                    </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">SUBTITLE / SLOGAN (MySQL: title)</label>
+                    <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">SUBTITLE / SLOGAN</label>
                     <input
                       type="text"
                       value={activeProfile.title || ''}
@@ -708,7 +704,7 @@ export default function App() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">ABOUT ME / DESCRIPTION (MySQL: about_me)</label>
+                    <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">ABOUT ME / DESCRIPTION</label>
                     <textarea
                       rows={4}
                       value={activeProfile.about_me || ''}
@@ -717,109 +713,19 @@ export default function App() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">PROFILE AVATAR URL (MySQL: profile_image)</label>
-                      <input
-                        type="text"
-                        value={activeProfile.profile_image || ''}
-                        onChange={(e) => handleInputChange('profile_image', e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2.5 rounded-xl text-xs font-mono mb-2"
-                        placeholder="https://..."
-                      />
-                      <div className="flex items-center gap-2">
-                        <label className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold cursor-pointer transition-all">
-                          Upload Local Photo
-                          <input 
-                            type="file" 
-                            accept="image/*" 
-                            onChange={(e) => handleImageUpload('profile_image', e)} 
-                            className="hidden" 
-                          />
-                        </label>
-                        <span className="text-[10px] text-slate-500">PNG / JPG (max 2MB)</span>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">COVER PHOTO URL (MySQL: cover_image)</label>
-                      <input
-                        type="text"
-                        value={activeProfile.cover_image || ''}
-                        onChange={(e) => handleInputChange('cover_image', e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2.5 rounded-xl text-xs font-mono mb-2"
-                        placeholder="https://..."
-                      />
-                      <div className="flex items-center gap-2">
-                        <label className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold cursor-pointer transition-all">
-                          Upload Local Cover
-                          <input 
-                            type="file" 
-                            accept="image/*" 
-                            onChange={(e) => handleImageUpload('cover_image', e)} 
-                            className="hidden" 
-                          />
-                        </label>
-                        <span className="text-[10px] text-slate-500">PNG / JPG (max 2MB)</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 pt-2">
-                    <div>
-                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">PARTNER KEY / ID (MySQL: pik)</label>
-                      <input
-                        type="text"
-                        value={activeProfile.pik || ''}
-                        onChange={(e) => handleInputChange('pik', e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2.5 rounded-xl text-sm font-mono uppercase"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">GOOGLE SEARCH REDIRECT (MySQL: google_redirect)</label>
-                      <select
-                        value={activeProfile.google_redirect ? 1 : 0}
-                        onChange={(e) => handleInputChange('google_redirect', Number(e.target.value))}
-                        className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2.5 rounded-xl text-sm font-semibold"
-                      >
-                        <option value={0}>Disabled (Show qla.dev landing page)</option>
-                        <option value={1}>Enabled (Auto redirect directly to Google reviews)</option>
-                      </select>
-                    </div>
-                  </div>
                 </div>
               )}
 
-              {/* TAB 2: CONTACT & LOCATION */}
-              {activeTab === 'contact' && (
+              {/* GOOGLE, LOCATION & REVIEWS */}
+              {activeTab === 'google' && (
                 <div className="space-y-4">
                   <div className="border-b border-slate-850 pb-2 mb-4">
-                    <h3 className="font-display font-semibold text-base text-white">Contact & Locational Data</h3>
-                    <p className="text-xs text-slate-500">Provide direct communication links for client actions</p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">TELEPHONE (MySQL: phone_number)</label>
-                      <input
-                        type="tel"
-                        value={activeProfile.phone_number || ''}
-                        onChange={(e) => handleInputChange('phone_number', e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2.5 rounded-xl text-sm font-semibold"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">OFFICE LINE (MySQL: office_number)</label>
-                      <input
-                        type="tel"
-                        value={activeProfile.office_number || ''}
-                        onChange={(e) => handleInputChange('office_number', e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2.5 rounded-xl text-sm font-semibold"
-                      />
-                    </div>
+                    <h3 className="font-display font-semibold text-base text-white">Google & Location</h3>
+                    <p className="text-xs text-slate-500">Configure the address, embedded map, directions, business profile, and reviews.</p>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">OFFICE STREET ADDRESS (MySQL: office_address)</label>
+                    <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">LOCATION / STREET ADDRESS</label>
                     <input
                       type="text"
                       value={activeProfile.office_address || ''}
@@ -829,25 +735,38 @@ export default function App() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">MAPS EMBED EMBED / TARGET (MySQL: map_location)</label>
+                    <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">EMBEDDED MAP URL</label>
                     <input
-                      type="text"
-                      value={activeProfile.map_location || ''}
+                      type="url"
+                      value={activeProfile.map_location ?? 'https://www.google.com/maps/embed?pb='}
                       onChange={(e) => handleInputChange('map_location', e.target.value)}
                       className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2.5 rounded-xl text-xs font-mono"
-                      placeholder="https://maps.google.com/?q=..."
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">WEBSITE LINK (MySQL: website)</label>
-                    <input
-                      type="url"
-                      value={activeProfile.website || ''}
-                      onChange={(e) => handleInputChange('website', e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2.5 rounded-xl text-sm font-mono"
-                      placeholder="https://..."
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">DIRECTIONS URL</label>
+                      <input type="url" value={activeProfile.directions ?? 'https://www.google.com/maps/dir/?api=1&destination='} onChange={(e) => handleInputChange('directions', e.target.value)} className="w-full bg-slate-900 focus:outline-none p-2.5 rounded-xl text-xs font-mono" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">GOOGLE MAP / BUSINESS PAGE</label>
+                      <input type="url" value={activeProfile.google ?? 'https://www.google.com/search?q='} onChange={(e) => handleInputChange('google', e.target.value)} className="w-full bg-slate-900 focus:outline-none p-2.5 rounded-xl text-xs font-mono" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">GOOGLE REVIEWS URL</label>
+                      <input type="url" value={activeProfile.reviews ?? 'https://search.google.com/local/reviews?placeid='} onChange={(e) => handleInputChange('reviews', e.target.value)} className="w-full bg-slate-900 focus:outline-none p-2.5 rounded-xl text-xs font-mono" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">GOOGLE REVIEW REDIRECT</label>
+                      <select value={activeProfile.google_redirect ? 1 : 0} onChange={(e) => handleInputChange('google_redirect', Number(e.target.value))} className="w-full bg-slate-900 focus:outline-none p-2.5 rounded-xl text-sm font-semibold">
+                        <option value={0}>Disabled — show profile</option>
+                        <option value={1}>Enabled — redirect to reviews</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               )}
@@ -860,34 +779,23 @@ export default function App() {
                     <p className="text-xs text-slate-500">Provide weekly timetables. Highlighting handles current day active states.</p>
                   </div>
 
-                  {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => {
-                    const key = `office_hours_${day}` as keyof ParsedTapProfile;
-                    return (
+                  {WORK_DAYS.map((day) => (
                       <div key={day} className="grid grid-cols-3 gap-4 items-center border-b border-slate-900 pb-3">
                         <label className="text-xs font-mono font-bold text-slate-400 uppercase col-span-1">{day}</label>
                         <div className="col-span-2">
                           <input
                             type="text"
-                            value={activeProfile[key] as string || ''}
-                            onChange={(e) => handleInputChange(key, e.target.value)}
-                            placeholder="09:00 AM - 05:00 PM (or 'Closed')"
+                            value={activeProfile.work_hours[day] || ''}
+                            onChange={(e) => handleInputChange('work_hours', {
+                              ...activeProfile.work_hours,
+                              [day]: e.target.value,
+                            })}
+                            placeholder="09:00 - 17:00 (or 'Zatvoreno')"
                             className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2 rounded-lg text-xs font-mono"
                           />
                         </div>
                       </div>
-                    );
-                  })}
-
-                  <div>
-                    <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">ADDITIONAL HOURS NOTE (MySQL: work_hours)</label>
-                    <input
-                      type="text"
-                      value={activeProfile.work_hours || ''}
-                      onChange={(e) => handleInputChange('work_hours', e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2.5 rounded-xl text-xs font-medium"
-                      placeholder="e.g. Standard Shopping Mall hours. Holiday timings may vary."
-                    />
-                  </div>
+                  ))}
                 </div>
               )}
 
@@ -895,8 +803,30 @@ export default function App() {
               {activeTab === 'socials' && (
                 <div className="space-y-4">
                   <div className="border-b border-slate-850 pb-2 mb-4">
-                    <h3 className="font-display font-semibold text-base text-white">Socials & Extended Links</h3>
-                    <p className="text-xs text-slate-500">Connect external channels and API appointment listings</p>
+                    <h3 className="font-display font-semibold text-base text-white">Social & Contact</h3>
+                    <p className="text-xs text-slate-500">Manage direct contact, social channels, bookings, and partner integrations.</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">TELEPHONE</label>
+                      <input type="tel" value={activeProfile.phone_number || ''} onChange={(e) => handleInputChange('phone_number', e.target.value)} className="w-full bg-slate-900 focus:outline-none p-2 rounded-lg text-xs font-mono" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">OFFICE LINE</label>
+                      <input type="tel" value={activeProfile.office_number || ''} onChange={(e) => handleInputChange('office_number', e.target.value)} className="w-full bg-slate-900 focus:outline-none p-2 rounded-lg text-xs font-mono" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">WEBSITE</label>
+                      <input type="url" value={activeProfile.website ?? 'https://'} onChange={(e) => handleInputChange('website', e.target.value)} className="w-full bg-slate-900 focus:outline-none p-2 rounded-lg text-xs font-mono" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">PARTNER KEY / ID</label>
+                      <input type="url" value={activeProfile.pik ?? 'https://olx.ba/'} onChange={(e) => handleInputChange('pik', e.target.value)} className="w-full bg-slate-900 focus:outline-none p-2 rounded-lg text-xs font-mono" />
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -906,10 +836,9 @@ export default function App() {
                       </label>
                       <input
                         type="url"
-                        value={activeProfile.facebook || ''}
+                        value={activeProfile.facebook ?? 'https://facebook.com/'}
                         onChange={(e) => handleInputChange('facebook', e.target.value)}
                         className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2 rounded-lg text-xs font-mono"
-                        placeholder="https://facebook.com/..."
                       />
                     </div>
                     <div>
@@ -918,10 +847,9 @@ export default function App() {
                       </label>
                       <input
                         type="url"
-                        value={activeProfile.instagram || ''}
+                        value={activeProfile.instagram ?? 'https://instagram.com/'}
                         onChange={(e) => handleInputChange('instagram', e.target.value)}
                         className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2 rounded-lg text-xs font-mono"
-                        placeholder="https://instagram.com/..."
                       />
                     </div>
                   </div>
@@ -929,14 +857,13 @@ export default function App() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase flex items-center gap-1">
-                        <MessageSquare className="w-3.5 h-3.5 text-emerald-500" /> WHATSAPP WHATSAPP
+                        <MessageSquare className="w-3.5 h-3.5 text-emerald-500" /> WHATSAPP
                       </label>
                       <input
                         type="url"
-                        value={activeProfile.whatsapp || ''}
+                        value={activeProfile.whatsapp ?? 'https://wa.me/'}
                         onChange={(e) => handleInputChange('whatsapp', e.target.value)}
                         className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2 rounded-lg text-xs font-mono"
-                        placeholder="https://wa.me/..."
                       />
                     </div>
                     <div>
@@ -945,10 +872,9 @@ export default function App() {
                       </label>
                       <input
                         type="url"
-                        value={activeProfile.linkedin || ''}
+                        value={activeProfile.linkedin ?? 'https://linkedin.com/in/'}
                         onChange={(e) => handleInputChange('linkedin', e.target.value)}
                         className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2 rounded-lg text-xs font-mono"
-                        placeholder="https://linkedin.com/in/..."
                       />
                     </div>
                   </div>
@@ -960,10 +886,9 @@ export default function App() {
                       </label>
                       <input
                         type="url"
-                        value={activeProfile.twitter || ''}
+                        value={activeProfile.twitter ?? 'https://x.com/'}
                         onChange={(e) => handleInputChange('twitter', e.target.value)}
                         className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2 rounded-lg text-xs font-mono"
-                        placeholder="https://twitter.com/..."
                       />
                     </div>
                     <div>
@@ -972,10 +897,9 @@ export default function App() {
                       </label>
                       <input
                         type="url"
-                        value={activeProfile.youtube || ''}
+                        value={activeProfile.youtube ?? 'https://youtube.com/'}
                         onChange={(e) => handleInputChange('youtube', e.target.value)}
                         className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2 rounded-lg text-xs font-mono"
-                        placeholder="https://youtube.com/..."
                       />
                     </div>
                   </div>
@@ -984,63 +908,64 @@ export default function App() {
                     <div className="text-xs font-semibold text-slate-300 mb-3 uppercase tracking-wider">External Bookings & Redirects</div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">CALENDLY BOOKING (MySQL: booking)</label>
+                        <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">CALENDLY BOOKING</label>
                         <input
                           type="url"
-                          value={activeProfile.booking || ''}
+                          value={activeProfile.booking ?? 'https://calendly.com/'}
                           onChange={(e) => handleInputChange('booking', e.target.value)}
                           className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2 rounded-lg text-xs font-mono"
-                          placeholder="https://calendly.com/..."
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">AIRBNB DIRECT LINK (MySQL: airbnb)</label>
+                        <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">AIRBNB DIRECT LINK</label>
                         <input
                           type="url"
-                          value={activeProfile.airbnb || ''}
+                          value={activeProfile.airbnb ?? 'https://airbnb.com/'}
                           onChange={(e) => handleInputChange('airbnb', e.target.value)}
                           className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2 rounded-lg text-xs font-mono"
-                          placeholder="https://airbnb.com/..."
                         />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 mt-4">
-                      <div>
-                        <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">GOOGLE BUSINESS PAGE (MySQL: google)</label>
-                        <input
-                          type="url"
-                          value={activeProfile.google || ''}
-                          onChange={(e) => handleInputChange('google', e.target.value)}
-                          className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2 rounded-lg text-xs font-mono"
-                          placeholder="https://google.com/..."
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">GOOGLE REVIEWS PATH (MySQL: reviews)</label>
-                        <input
-                          type="url"
-                          value={activeProfile.reviews || ''}
-                          onChange={(e) => handleInputChange('reviews', e.target.value)}
-                          className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2 rounded-lg text-xs font-mono"
-                          placeholder="https://search.google.com/..."
-                        />
-                      </div>
-                    </div>
                   </div>
                 </div>
               )}
 
-              {/* TAB 5: MEDIA & CONTENT SHOWCASES */}
-              {activeTab === 'content' && (
+              {/* GALLERY, PROFILE & COVER MEDIA */}
+              {activeTab === 'gallery' && (
                 <div className="space-y-6">
+
+                  <div>
+                    <div className="border-b border-slate-850 pb-2 mb-4">
+                      <h3 className="font-display font-semibold text-base text-white">Profile & Cover Images</h3>
+                      <p className="text-xs text-slate-500">Manage the primary logo and cover used by the public profile.</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">PROFILE IMAGE URL</label>
+                        <input type="text" value={activeProfile.profile_image ?? 'https://'} onChange={(e) => handleInputChange('profile_image', e.target.value)} className="w-full bg-slate-900 focus:outline-none p-2.5 rounded-xl text-xs font-mono mb-2" />
+                        <label className="inline-flex px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold cursor-pointer transition-all">
+                          Upload Profile Image
+                          <input type="file" accept="image/*" onChange={(e) => handleImageUpload('profile_image', e)} className="hidden" />
+                        </label>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">COVER IMAGE URL</label>
+                        <input type="text" value={activeProfile.cover_image ?? 'https://'} onChange={(e) => handleInputChange('cover_image', e.target.value)} className="w-full bg-slate-900 focus:outline-none p-2.5 rounded-xl text-xs font-mono mb-2" />
+                        <label className="inline-flex px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold cursor-pointer transition-all">
+                          Upload Cover Image
+                          <input type="file" accept="image/*" onChange={(e) => handleImageUpload('cover_image', e)} className="hidden" />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
                   
                   {/* Photo Gallery Manager */}
                   <div>
                     <div className="flex justify-between items-center border-b border-slate-850 pb-2 mb-4">
                       <div>
                         <h3 className="font-display font-semibold text-base text-white">Media Gallery</h3>
-                        <p className="text-xs text-slate-500">Add portfolio layouts to display on the tap page (MySQL: gallery)</p>
+                        <p className="text-xs text-slate-500">Add portfolio layouts to display on the tap page.</p>
                       </div>
                       <button
                         onClick={handleAddGalleryUrl}
@@ -1075,7 +1000,7 @@ export default function App() {
                     <div className="flex justify-between items-center border-b border-slate-850 pb-2 mb-4">
                       <div>
                         <h3 className="font-display font-semibold text-base text-white">Services Offered</h3>
-                        <p className="text-xs text-slate-500">Configure product catalogs or consultations (MySQL: services)</p>
+                        <p className="text-xs text-slate-500">Configure product catalogs or consultations.</p>
                       </div>
                       <button
                         onClick={handleAddService}
@@ -1157,7 +1082,7 @@ export default function App() {
                     <div className="flex justify-between items-center border-b border-slate-850 pb-2 mb-4">
                       <div>
                         <h3 className="font-display font-semibold text-base text-white">Testimonials & Reviews</h3>
-                        <p className="text-xs text-slate-500">Showcase user-rated feedback to build brand loyalty (MySQL: testimonials)</p>
+                        <p className="text-xs text-slate-500">Showcase user-rated feedback to build brand loyalty.</p>
                       </div>
                       <button
                         onClick={handleAddTestimonial}
@@ -1253,33 +1178,19 @@ export default function App() {
         )}
 
         {/* COLUMN 3: REAL-TIME MOBILE CARD VISUAL PREVIEW */}
-        {workspaceView === 'editor' && activeProfile && (viewMode === 'fullscreen' || viewMode === 'split') && (
-          <section className={`bg-slate-950 flex flex-col items-center justify-center relative p-6 shrink-0 border-slate-800 ${
-            viewMode === 'fullscreen' ? 'w-full overflow-y-auto' : 'w-[420px] border-l overflow-hidden'
-          }`}>
-            
-            {/* Top Device Orientation Header */}
-            {viewMode === 'split' && (
-              <div className="absolute top-4 left-6 right-6 flex justify-between items-center z-10 shrink-0">
-                <div className="flex items-center gap-1.5 text-xs text-slate-400 font-mono font-semibold">
-                  <Smartphone className="w-4 h-4 text-slate-500" />
-                  <span>MOBILE PREVIEW</span>
-                </div>
-                <a 
-                  href={`${window.location.origin}/${activeProfile.slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-2.5 py-1 bg-slate-900 border border-slate-800 hover:bg-slate-850 text-slate-300 hover:text-white rounded-lg text-[10px] font-mono font-bold flex items-center gap-1 transition-all"
-                >
-                  Open in New Tab <ExternalLink className="w-3 h-3" />
-                </a>
-              </div>
-            )}
+        {workspaceView === 'editor' && activeProfile && viewMode === 'preview' && (
+          <section className="bg-slate-950 flex flex-col items-center justify-center relative p-6 shrink-0 w-full overflow-y-auto">
+            <a
+              href={`${window.location.origin}/${activeProfile.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="absolute top-4 right-6 px-2.5 py-1 bg-slate-900 hover:bg-slate-850 text-slate-300 hover:text-white rounded-lg text-[10px] font-mono font-bold flex items-center gap-1 transition-all"
+            >
+              Open in New Tab <ExternalLink className="w-3 h-3" />
+            </a>
 
             {/* Simulated Smartphone Screen Wrapper */}
-            <div className={`w-full max-w-[360px] h-[720px] rounded-[38px] bg-slate-950 border-[10px] border-slate-900 shadow-2xl relative overflow-hidden flex flex-col ${
-              viewMode === 'fullscreen' ? 'my-auto scale-105' : 'scale-95'
-            }`}>
+            <div className="w-full max-w-[360px] h-[720px] rounded-[38px] bg-slate-950 border-[10px] border-slate-900 shadow-2xl relative overflow-hidden flex flex-col my-auto scale-105">
               
               {/* Dynamic Screen Punch Hole Bezel */}
               <div className="absolute top-0 inset-x-0 h-6 bg-slate-950 z-40 flex justify-center">
@@ -1292,12 +1203,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Quick helper tag at preview bottom */}
-            {viewMode === 'split' && (
-              <p className="text-[10px] text-slate-500 text-center font-mono max-w-xs mt-3 leading-relaxed">
-                * Drag and drop, select items, or type fields on the left. The preview frame refreshes on every keypress!
-              </p>
-            )}
           </section>
         )}
 

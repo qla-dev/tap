@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { TapProfile, ParsedTapProfile, Testimonial, Service, GalleryItem } from '../types';
+import { TapProfile, ParsedTapProfile, Testimonial, Service, GalleryItem, WorkHours } from '../types';
 
 // Initial high-fidelity template for the "mi-store" digital card
 const INITIAL_PROFILES: TapProfile[] = [
@@ -79,17 +79,18 @@ const INITIAL_PROFILES: TapProfile[] = [
     airbnb: "",
     google: "https://google.com/search?q=Xiaomi+Official+Store",
     pik: "XI-8842",
-    office_hours_monday: "09:00 AM - 08:00 PM",
-    office_hours_tuesday: "09:00 AM - 08:00 PM",
-    office_hours_wednesday: "09:00 AM - 08:00 PM",
-    office_hours_thursday: "09:00 AM - 08:00 PM",
-    office_hours_friday: "09:00 AM - 08:00 PM",
-    office_hours_saturday: "10:00 AM - 06:00 PM",
-    office_hours_sunday: "11:00 AM - 05:00 PM",
     website: "https://mi.com",
     directions: "https://maps.google.com/?q=452+Silicon+Boulevard+San+Jose+CA",
     reviews: "https://search.google.com/local/reviews?placeid=mi-store",
-    work_hours: "Standard Shopping Mall hours. Holiday timings may vary.",
+    work_hours: {
+      Ponedjeljak: "09:00 - 20:00",
+      Utorak: "09:00 - 20:00",
+      Srijeda: "09:00 - 20:00",
+      Četvrtak: "09:00 - 20:00",
+      Petak: "09:00 - 20:00",
+      Subota: "10:00 - 18:00",
+      Nedjelja: "11:00 - 17:00",
+    },
     views: 482,
     google_redirect: 0
   },
@@ -146,17 +147,18 @@ const INITIAL_PROFILES: TapProfile[] = [
     airbnb: "",
     google: "",
     pik: "EL-009",
-    office_hours_monday: "10:00 AM - 06:00 PM",
-    office_hours_tuesday: "10:00 AM - 06:00 PM",
-    office_hours_wednesday: "10:00 AM - 06:00 PM",
-    office_hours_thursday: "10:00 AM - 06:00 PM",
-    office_hours_friday: "10:00 AM - 04:00 PM",
-    office_hours_saturday: "Closed",
-    office_hours_sunday: "Closed",
     website: "https://elena.design",
     directions: "",
     reviews: "",
-    work_hours: "Freelance availability. Virtual consultations only.",
+    work_hours: {
+      Ponedjeljak: "10:00 - 18:00",
+      Utorak: "10:00 - 18:00",
+      Srijeda: "10:00 - 18:00",
+      Četvrtak: "10:00 - 18:00",
+      Petak: "10:00 - 16:00",
+      Subota: "Zatvoreno",
+      Nedjelja: "Zatvoreno",
+    },
     views: 125,
     google_redirect: 0
   }
@@ -166,6 +168,7 @@ export const parseProfile = (p: TapProfile): ParsedTapProfile => {
   let gallery: GalleryItem[] = [];
   let testimonials: Testimonial[] = [];
   let services: Service[] = [];
+  let workHours: WorkHours = {};
 
   try {
     const rawGallery: unknown = Array.isArray(p.gallery) ? p.gallery : (p.gallery ? JSON.parse(p.gallery) : []);
@@ -205,11 +208,26 @@ export const parseProfile = (p: TapProfile): ParsedTapProfile => {
     console.error("Error parsing services JSON", e);
   }
 
+  try {
+    const rawWorkHours: unknown = typeof p.work_hours === 'string'
+      ? JSON.parse(p.work_hours)
+      : p.work_hours;
+
+    if (rawWorkHours && typeof rawWorkHours === 'object' && !Array.isArray(rawWorkHours)) {
+      workHours = Object.fromEntries(
+        Object.entries(rawWorkHours).filter((entry): entry is [string, string] => typeof entry[1] === 'string')
+      );
+    }
+  } catch (e) {
+    console.error("Error parsing work hours JSON", e);
+  }
+
   return {
     ...p,
     gallery,
     testimonials,
-    services
+    services,
+    work_hours: workHours,
   };
 };
 
@@ -244,7 +262,12 @@ const request = async <T>(url: string, init?: RequestInit): Promise<T> => {
 };
 
 const apiPayload = (profile: ParsedTapProfile) => {
-  const { id, created_at, updated_at, email_verified_at, remember_token, views, ...payload } = profile;
+  const {
+    id, created_at, updated_at, email_verified_at, remember_token, views,
+    office_hours_monday, office_hours_tuesday, office_hours_wednesday,
+    office_hours_thursday, office_hours_friday, office_hours_saturday,
+    office_hours_sunday, ...payload
+  } = profile;
   return payload;
 };
 
@@ -301,10 +324,8 @@ export const generateSqlInsert = (p: ParsedTapProfile): string => {
     'created_at', 'updated_at', 'phone_number', 'office_number', 'office_address',
     'profile_image', 'cover_image', 'title', 'about_me', 'gallery', 'map_location',
     'testimonials', 'services', 'facebook', 'instagram', 'whatsapp', 'linkedin',
-    'twitter', 'youtube', 'booking', 'airbnb', 'google', 'pik', 'office_hours_monday',
-    'office_hours_tuesday', 'office_hours_wednesday', 'office_hours_thursday',
-    'office_hours_friday', 'office_hours_saturday', 'office_hours_sunday',
-    'website', 'directions', 'reviews', 'work_hours', 'views', 'google_redirect'
+    'twitter', 'youtube', 'booking', 'airbnb', 'google', 'pik', 'website',
+    'directions', 'reviews', 'work_hours', 'views', 'google_redirect'
   ];
 
   const values = [
@@ -338,17 +359,10 @@ export const generateSqlInsert = (p: ParsedTapProfile): string => {
     dbProfile.airbnb ? escapeSqlString(dbProfile.airbnb) : 'NULL',
     dbProfile.google ? escapeSqlString(dbProfile.google) : 'NULL',
     dbProfile.pik ? escapeSqlString(dbProfile.pik) : 'NULL',
-    dbProfile.office_hours_monday ? escapeSqlString(dbProfile.office_hours_monday) : 'NULL',
-    dbProfile.office_hours_tuesday ? escapeSqlString(dbProfile.office_hours_tuesday) : 'NULL',
-    dbProfile.office_hours_wednesday ? escapeSqlString(dbProfile.office_hours_wednesday) : 'NULL',
-    dbProfile.office_hours_thursday ? escapeSqlString(dbProfile.office_hours_thursday) : 'NULL',
-    dbProfile.office_hours_friday ? escapeSqlString(dbProfile.office_hours_friday) : 'NULL',
-    dbProfile.office_hours_saturday ? escapeSqlString(dbProfile.office_hours_saturday) : 'NULL',
-    dbProfile.office_hours_sunday ? escapeSqlString(dbProfile.office_hours_sunday) : 'NULL',
     dbProfile.website ? escapeSqlString(dbProfile.website) : 'NULL',
     dbProfile.directions ? escapeSqlString(dbProfile.directions) : 'NULL',
     dbProfile.reviews ? escapeSqlString(dbProfile.reviews) : 'NULL',
-    dbProfile.work_hours ? escapeSqlString(dbProfile.work_hours) : 'NULL',
+    dbProfile.work_hours ? escapeSqlString(typeof dbProfile.work_hours === 'string' ? dbProfile.work_hours : JSON.stringify(dbProfile.work_hours)) : 'NULL',
     dbProfile.views,
     dbProfile.google_redirect ? 1 : 0
   ];

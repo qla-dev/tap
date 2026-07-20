@@ -51,16 +51,14 @@ export default function TapCardPreview({ profile, isStandalone = false }: TapCar
 
   // Determine current day of the week and if the office is currently open
   useEffect(() => {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const days = ['Nedjelja', 'Ponedjeljak', 'Utorak', 'Srijeda', 'Četvrtak', 'Petak', 'Subota'];
     const now = new Date();
     const todayName = days[now.getDay()];
     setCurrentDayStr(todayName);
 
-    // Dynamic office-hours checker
-    const hoursKey = `office_hours_${todayName.toLowerCase()}` as keyof ParsedTapProfile;
-    const todayHours = profile[hoursKey] as string | null;
+    const todayHours = profile.work_hours[todayName];
 
-    if (!todayHours || todayHours.toLowerCase() === 'closed') {
+    if (!todayHours || ['closed', 'zatvoreno'].includes(todayHours.toLowerCase())) {
       setHoursOpen(false);
       return;
     }
@@ -321,7 +319,7 @@ export default function TapCardPreview({ profile, isStandalone = false }: TapCar
               <div>
                 <span className="text-xs font-mono font-bold text-slate-400 tracking-wider uppercase block">OFFICE HOURS</span>
                 <span className="text-xs text-slate-200 font-semibold mt-0.5">
-                  {hoursOpen ? 'Open Now' : 'Closed'} • {currentDayStr ? profile[`office_hours_${currentDayStr.toLowerCase()}` as keyof ParsedTapProfile] as string : 'Contact for details'}
+                  {hoursOpen ? 'Open Now' : 'Closed'} • {currentDayStr ? profile.work_hours[currentDayStr] || 'Contact for details' : 'Contact for details'}
                 </span>
               </div>
             </div>
@@ -330,9 +328,9 @@ export default function TapCardPreview({ profile, isStandalone = false }: TapCar
 
           {showHoursList && (
             <div className="border-t border-slate-850 bg-slate-950/45 px-4.5 py-3 space-y-2 text-xs">
-              {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => {
+              {['Ponedjeljak', 'Utorak', 'Srijeda', 'Četvrtak', 'Petak', 'Subota', 'Nedjelja'].map((day) => {
                 const isToday = day === currentDayStr;
-                const hours = profile[`office_hours_${day.toLowerCase()}` as keyof ParsedTapProfile] as string | null;
+                const hours = profile.work_hours[day];
                 return (
                   <div 
                     key={day} 
@@ -345,11 +343,6 @@ export default function TapCardPreview({ profile, isStandalone = false }: TapCar
                   </div>
                 );
               })}
-              {profile.work_hours && (
-                <p className="text-[10px] text-slate-500 font-mono mt-3 text-center border-t border-slate-850 pt-2">
-                  * {profile.work_hours}
-                </p>
-              )}
             </div>
           )}
         </div>

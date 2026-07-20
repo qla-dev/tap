@@ -23,12 +23,22 @@ class AdminProfileApiTest extends TestCase
             ]],
             'testimonials' => [],
             'services' => [],
+            'work_hours' => [
+                'Ponedjeljak' => '09:00 - 17:00',
+                'Utorak' => '09:00 - 17:00',
+                'Srijeda' => '09:00 - 17:00',
+                'Četvrtak' => '09:00 - 17:00',
+                'Petak' => '09:00 - 17:00',
+                'Subota' => 'Zatvoreno',
+                'Nedjelja' => 'Zatvoreno',
+            ],
             'google_redirect' => false,
         ];
 
         $created = $this->postJson('/api/admin/profiles', $profile)
             ->assertCreated()
             ->assertJsonPath('slug', 'example-company')
+            ->assertJsonPath('work_hours.Ponedjeljak', '09:00 - 17:00')
             ->assertJsonMissingPath('password');
 
         $id = $created->json('id');

@@ -27,6 +27,21 @@ body,
   background: #141414;
 }
 
+/* Forms use filled surfaces instead of outlined controls. */
+#qla-main-dashboard input,
+#qla-main-dashboard textarea,
+#qla-main-dashboard select {
+  border-width: 0 !important;
+  border-color: transparent !important;
+  box-shadow: none;
+}
+
+#qla-main-dashboard input:focus,
+#qla-main-dashboard textarea:focus,
+#qla-main-dashboard select:focus {
+  box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.42);
+}
+
 /* Custom Scrollbar Styles for elegant UI */
 ::-webkit-scrollbar {
   width: 6px;

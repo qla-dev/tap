@@ -1,5 +1,5 @@
 {
-  "name": "QLA Tap CMS Dashboard",
+  "name": "qla.dev TAP",
   "description": "Tablet-optimized CMS dashboard for managing digital tap profiles, generating QR codes, programming NFC tags, and exporting SQL payloads for Laravel integrations.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
