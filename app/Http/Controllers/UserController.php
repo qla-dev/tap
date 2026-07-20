@@ -7,6 +7,17 @@ use App\Models\User;
 
 class UserController extends Controller
 {
+    public function countViews($name)
+    {
+        $user = User::where('slug', $name)
+            ->orWhere('name', $name)
+            ->firstOrFail();
+
+        $user->increment('views');
+
+        return response()->json(['views' => $user->fresh()->views]);
+    }
+
     public function show($name)
     {
         $user = User::where('slug', $name)

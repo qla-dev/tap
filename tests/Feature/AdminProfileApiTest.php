@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -40,5 +41,20 @@ class AdminProfileApiTest extends TestCase
 
         $this->deleteJson("/api/admin/profiles/{$id}")->assertNoContent();
         $this->assertDatabaseMissing('users', ['id' => $id]);
+    }
+
+    public function test_profile_view_count_can_be_incremented_without_matching_admin(): void
+    {
+        $profile = User::factory()->create([
+            'slug' => 'example-card',
+            'views' => 3,
+        ]);
+
+        $this->postJson('/example-card/count-views')
+            ->assertOk()
+            ->assertJsonPath('views', 4);
+
+        $this->assertDatabaseHas('users', ['id' => $profile->id, 'views' => 4]);
+        $this->postJson('/admin/count-views')->assertNotFound();
     }
 }
