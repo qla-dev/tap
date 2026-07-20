@@ -10,13 +10,14 @@ import {
   Clock, Share2, Eye, ShieldCheck, Heart, AlertTriangle, 
   SmartphoneNfc, Info, Wifi, WifiOff, Download, Code,
   Wrench, Home, MessageSquare, ChevronRight, Play, ExternalLink,
-  Facebook, Instagram, Linkedin, Twitter, Youtube
+  Facebook, Instagram, Linkedin, Twitter, Youtube, ChevronLeft, LayoutDashboard
 } from 'lucide-react';
 import { TapProfile, ParsedTapProfile, Testimonial, Service } from './types';
 import { createProfile, deleteProfile, loadProfiles, saveProfile } from './services/api';
 import TapCardPreview from './components/TapCardPreview';
 import NfcProgrammer from './components/NfcProgrammer';
 import DatabaseExporter from './components/DatabaseExporter';
+import { mediaUrl } from './utils/media';
 
 export default function App() {
   const [profiles, setProfiles] = useState<ParsedTapProfile[]>([]);
@@ -30,6 +31,8 @@ export default function App() {
   const [isInstalled, setIsInstalled] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [viewMode, setViewMode] = useState<'split' | 'fullscreen'>('split');
+  const [workspaceView, setWorkspaceView] = useState<'home' | 'editor'>('home');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Form input validation helper state
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -145,6 +148,8 @@ export default function App() {
       const created = await createProfile(newProfile);
       setProfiles(current => [...current, created]);
       setActiveProfileId(created.id);
+      setActiveTab('identity');
+      setWorkspaceView('editor');
     } catch (error) {
       console.error('Unable to create profile', error);
       alert('Unable to create the profile. Check that its email and slug are unique.');
@@ -299,12 +304,27 @@ export default function App() {
     p.slug.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const openEditor = (tab: typeof activeTab) => {
+    setActiveTab(tab);
+    setWorkspaceView('editor');
+    setViewMode('split');
+  };
+
+  const quickActions = [
+    { id: 'identity', label: 'Identity & Branding', description: 'Update the logo, cover, profile name, URL slug, and core brand details.', icon: Sliders, iconClass: 'bg-blue-500/15 text-blue-400' },
+    { id: 'contact', label: 'Contact Details', description: 'Manage phone numbers, email, office address, website, and map location.', icon: MapPin, iconClass: 'bg-emerald-500/15 text-emerald-400' },
+    { id: 'hours', label: 'Working Hours', description: 'Set the weekly opening schedule and additional availability information.', icon: Clock, iconClass: 'bg-amber-500/15 text-amber-400' },
+    { id: 'socials', label: 'Socials & Links', description: 'Connect social profiles, booking pages, reviews, and external actions.', icon: Share2, iconClass: 'bg-violet-500/15 text-violet-400' },
+    { id: 'content', label: 'Media & Services', description: 'Curate gallery images, services, testimonials, and rich profile content.', icon: Sparkles, iconClass: 'bg-rose-500/15 text-rose-400' },
+    { id: 'developer', label: 'Developer & NFC', description: 'Export profile data, inspect integration details, and program NFC tags.', icon: Code, iconClass: 'bg-orange-500/15 text-orange-400' },
+  ] as const;
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col h-screen overflow-hidden" id="qla-main-dashboard">
       
       {/* HEADER SECTION (PWA & STATUS CONTROL BAR) */}
       <header className="bg-slate-900 border-b border-slate-800 px-6 py-3.5 shrink-0 flex items-center justify-between z-30">
-        <div className="flex items-center gap-3">
+        <button onClick={() => { setWorkspaceView('home'); setViewMode('split'); }} className="flex items-center gap-3 text-left cursor-pointer" title="Open dashboard home">
           <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
             <SmartphoneNfc className="w-5.5 h-5.5 text-white animate-pulse" />
           </div>
@@ -315,7 +335,7 @@ export default function App() {
             </div>
             <p className="text-xs text-slate-400">Digital Business Cards & NFC Programmer Hub</p>
           </div>
-        </div>
+        </button>
 
         {/* Dynamic PWA Status indicators */}
         <div className="flex items-center gap-3">
@@ -370,7 +390,7 @@ export default function App() {
               Split View
             </button>
             <button
-              onClick={() => setViewMode('fullscreen')}
+              onClick={() => { setWorkspaceView('editor'); setViewMode('fullscreen'); }}
               className={`px-3 py-1 rounded-md font-medium transition-all cursor-pointer ${
                 viewMode === 'fullscreen' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200'
               }`}
@@ -386,9 +406,26 @@ export default function App() {
         
         {/* COLUMN 1: SIDEBAR (PROFILES & ANALYTICS DIRECTORY) */}
         {viewMode === 'split' && (
-          <aside className="w-80 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0 overflow-y-auto">
+          <aside className={`${sidebarCollapsed ? 'w-[76px]' : 'w-80'} bg-slate-900 border-r border-slate-800 flex flex-col shrink-0 overflow-hidden transition-[width] duration-300 ease-out`}>
+
+            <div className={`h-12 border-b border-slate-800 flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between px-4'} shrink-0`}>
+              {!sidebarCollapsed && (
+                <button onClick={() => setWorkspaceView('home')} className={`flex items-center gap-2 text-xs font-semibold transition-colors cursor-pointer ${workspaceView === 'home' ? 'text-white' : 'text-slate-400 hover:text-white'}`}>
+                  <LayoutDashboard className="w-4 h-4" /> Dashboard
+                </button>
+              )}
+              <button
+                onClick={() => setSidebarCollapsed(value => !value)}
+                className="w-8 h-8 rounded-lg border border-slate-700/70 bg-slate-950/60 hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              >
+                {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+              </button>
+            </div>
             
             {/* Bento Quick Metrics */}
+            {!sidebarCollapsed ? (
             <div className="p-4 border-b border-slate-800 bg-slate-950/20">
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <div className="bg-slate-950 p-3 rounded-xl border border-slate-850">
@@ -415,9 +452,29 @@ export default function App() {
                 <Plus className="w-4 h-4" /> Create New Profile
               </button>
             </div>
+            ) : (
+              <div className="p-3 border-b border-slate-800 flex flex-col items-center gap-2">
+                <button
+                  onClick={() => setWorkspaceView('home')}
+                  className={`w-11 h-11 rounded-xl flex items-center justify-center border transition-all cursor-pointer ${workspaceView === 'home' ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'}`}
+                  title="Dashboard home"
+                >
+                  <LayoutDashboard className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={handleCreateProfile}
+                  className="w-11 h-11 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center transition-all cursor-pointer"
+                  title="Create new profile"
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
+              </div>
+            )}
 
             {/* Profiles List with Search */}
-            <div className="p-4 flex-grow flex flex-col overflow-hidden">
+            <div className={`${sidebarCollapsed ? 'p-2' : 'p-4'} flex-grow flex flex-col overflow-hidden`}>
+              {!sidebarCollapsed && (
+              <>
               <div className="relative mb-4 shrink-0">
                 <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
                 <input
@@ -430,16 +487,19 @@ export default function App() {
               </div>
 
               <div className="text-xs text-slate-500 font-mono font-bold tracking-wider uppercase mb-2">ACTIVE SITES DIRECTORY</div>
+              </>
+              )}
               
               {/* Profile Scroll Container */}
-              <div className="space-y-2 overflow-y-auto flex-grow scrollbar pr-1">
+              <div className={`${sidebarCollapsed ? 'space-y-2 px-1' : 'space-y-2 pr-1'} overflow-y-auto flex-grow scrollbar`}>
                 {filteredProfiles.map((p) => {
                   const isActive = p.id === activeProfileId;
                   return (
                     <div
                       key={p.id}
-                      onClick={() => setActiveProfileId(p.id)}
-                      className={`group p-3 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
+                      onClick={() => { setActiveProfileId(p.id); setWorkspaceView('editor'); }}
+                      title={sidebarCollapsed ? p.name : undefined}
+                      className={`group ${sidebarCollapsed ? 'p-2 justify-center' : 'p-3 justify-between'} rounded-xl border transition-all flex items-center cursor-pointer ${
                         isActive
                           ? 'bg-slate-800/80 border-slate-700/80 shadow-md ring-1 ring-slate-750'
                           : 'bg-slate-950/40 border-slate-850 hover:bg-slate-900 hover:border-slate-800'
@@ -448,7 +508,7 @@ export default function App() {
                       <div className="flex items-center gap-2.5 min-w-0">
                         {p.profile_image ? (
                           <img 
-                            src={p.profile_image} 
+                            src={mediaUrl(p.profile_image)}
                             alt={p.name} 
                             className="w-9 h-9 rounded-lg object-cover shrink-0 border border-slate-800" 
                             referrerPolicy="no-referrer"
@@ -458,13 +518,13 @@ export default function App() {
                             {p.name.charAt(0)}
                           </div>
                         )}
-                        <div className="min-w-0">
+                        {!sidebarCollapsed && <div className="min-w-0">
                           <h4 className={`text-xs font-semibold truncate ${isActive ? 'text-white' : 'text-slate-300'}`}>{p.name}</h4>
                           <span className="text-[10px] text-slate-500 font-mono block truncate">/{p.slug}</span>
-                        </div>
+                        </div>}
                       </div>
 
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      {!sidebarCollapsed && <div className="flex items-center gap-1.5 shrink-0">
                         <span className="text-[10px] text-slate-500 font-mono flex items-center gap-0.5">
                           <Eye className="w-3 h-3" /> {p.views}
                         </span>
@@ -478,29 +538,79 @@ export default function App() {
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
-                      </div>
+                      </div>}
                     </div>
                   );
                 })}
 
                 {filteredProfiles.length === 0 && (
                   <div className="text-center py-8 text-slate-600 text-xs italic">
-                    No template profiles match your search criteria.
+                    {sidebarCollapsed ? '—' : 'No profiles match your search criteria.'}
                   </div>
                 )}
               </div>
             </div>
 
             {/* Quick Helper Tip in sidebar footer */}
-            <div className="p-4 mt-auto border-t border-slate-800 bg-slate-950/40 text-[10px] text-slate-500 leading-relaxed font-mono">
+            {!sidebarCollapsed && <div className="p-4 mt-auto border-t border-slate-800 bg-slate-950/40 text-[10px] text-slate-500 leading-relaxed font-mono">
               <span className="font-semibold block text-slate-400 mb-1">PROTOTYPE SYNC MODE</span>
-              Saves to client offline space. Press the "Developer Sync" tab to generate the raw MySQL dump.
-            </div>
+              Changes are synchronized with the Laravel profile API.
+            </div>}
           </aside>
         )}
 
+        {/* DASHBOARD HOME: QUICK ACTION LANDING */}
+        {viewMode === 'split' && workspaceView === 'home' && (
+          <main className="flex-grow overflow-y-auto bg-[#171717] px-8 py-10 lg:px-16 lg:py-14 scrollbar">
+            <div className="max-w-[1180px] mx-auto min-h-full flex flex-col justify-center">
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5 mb-7">
+                <div>
+                  <p className="text-xs font-mono font-semibold tracking-[0.18em] uppercase text-slate-500 mb-3">QLA Tap workspace</p>
+                  <h1 className="font-sans text-4xl lg:text-[44px] font-normal tracking-[-0.035em] text-slate-100">Manage your digital profiles</h1>
+                  <p className="text-sm text-slate-500 mt-3">Choose a quick option to update {activeProfile?.name || 'a profile'}.</p>
+                </div>
+                <div className="rounded-full bg-[#202020] border border-[#2d2d2d] p-1 flex text-xs shrink-0 self-start sm:self-auto">
+                  <button className="px-4 py-2 rounded-full bg-[#303030] text-slate-100 font-semibold">Quick options</button>
+                  <button onClick={() => openEditor('identity')} className="px-4 py-2 rounded-full text-slate-500 hover:text-slate-200 transition-colors cursor-pointer">Full editor</button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
+                {quickActions.map(action => {
+                  const Icon = action.icon;
+                  return (
+                    <button
+                      key={action.id}
+                      onClick={() => openEditor(action.id)}
+                      disabled={!activeProfile}
+                      className="group min-h-[176px] rounded-2xl border border-[#303030] bg-[#202020] hover:bg-[#242424] hover:border-[#3b3b3b] p-5 text-left transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <div className="flex items-center gap-3 mb-4">
+                        <span className={`w-10 h-10 rounded-xl flex items-center justify-center ${action.iconClass}`}>
+                          <Icon className="w-5 h-5" />
+                        </span>
+                        <span className="text-[17px] font-semibold text-slate-200 group-hover:text-white transition-colors">{action.label}</span>
+                      </div>
+                      <p className="text-sm leading-6 text-[#929292] max-w-sm">{action.description}</p>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-7 flex flex-wrap items-center gap-3">
+                <button onClick={() => openEditor('identity')} disabled={!activeProfile} className="px-4 py-2 rounded-xl border border-[#303030] bg-[#1b1b1b] hover:bg-[#252525] text-sm font-semibold text-slate-200 transition-all cursor-pointer disabled:opacity-50">
+                  Start editing
+                </button>
+                <button onClick={handleCreateProfile} className="px-4 py-2 rounded-xl text-sm font-semibold text-slate-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2">
+                  <Plus className="w-4 h-4" /> Create new profile
+                </button>
+              </div>
+            </div>
+          </main>
+        )}
+
         {/* COLUMN 2: RICH CMS FORM EDITORS */}
-        {viewMode === 'split' && activeProfile && (
+        {viewMode === 'split' && workspaceView === 'editor' && activeProfile && (
           <main className="flex-grow bg-slate-950 border-r border-slate-800 flex flex-col overflow-hidden">
             
             {/* Section tabs header */}
@@ -945,7 +1055,7 @@ export default function App() {
                     <div className="grid grid-cols-4 gap-3">
                       {activeProfile.gallery.map((url, i) => (
                         <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-slate-800 bg-slate-900 group">
-                          <img src={url} alt={`Gallery item ${i}`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          <img src={mediaUrl(url)} alt={`Gallery item ${i}`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                           <button
                             onClick={() => handleRemoveGalleryUrl(i)}
                             className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-rose-400 hover:text-rose-300 font-semibold text-xs transition-all cursor-pointer"
@@ -1145,7 +1255,7 @@ export default function App() {
         )}
 
         {/* COLUMN 3: REAL-TIME MOBILE CARD VISUAL PREVIEW */}
-        {activeProfile && (viewMode === 'fullscreen' || viewMode === 'split') && (
+        {workspaceView === 'editor' && activeProfile && (viewMode === 'fullscreen' || viewMode === 'split') && (
           <section className={`bg-slate-950 flex flex-col items-center justify-center relative p-6 shrink-0 border-slate-800 ${
             viewMode === 'fullscreen' ? 'w-full overflow-y-auto' : 'w-[420px] border-l overflow-hidden'
           }`}>

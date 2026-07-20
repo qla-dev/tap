@@ -13,6 +13,7 @@ import {
   Check, Copy, Navigation, MessageSquare
 } from 'lucide-react';
 import { ParsedTapProfile, Service, Testimonial } from '../types';
+import { mediaUrl } from '../utils/media';
 
 interface TapCardPreviewProps {
   profile: ParsedTapProfile;
@@ -30,7 +31,7 @@ export default function TapCardPreview({ profile, isStandalone = false }: TapCar
   const qrCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const localOrigin = window.location.origin;
-  const cardUrl = `${localOrigin}/tap/${profile.slug}`;
+  const cardUrl = `${localOrigin}/${profile.slug}`;
 
   // Generate QR code dynamically when slug or profile changes
   useEffect(() => {
@@ -117,7 +118,7 @@ export default function TapCardPreview({ profile, isStandalone = false }: TapCar
       <div className="relative h-44 w-full bg-slate-900 overflow-hidden">
         {profile.cover_image ? (
           <img 
-            src={profile.cover_image} 
+            src={mediaUrl(profile.cover_image)}
             alt="Cover" 
             className="w-full h-full object-cover opacity-85 hover:scale-105 transition-all duration-700"
             referrerPolicy="no-referrer"
@@ -137,7 +138,7 @@ export default function TapCardPreview({ profile, isStandalone = false }: TapCar
           <div className="w-28 h-28 rounded-2xl bg-slate-950 p-1 ring-4 ring-slate-950/40 shadow-xl overflow-hidden">
             {profile.profile_image ? (
               <img 
-                src={profile.profile_image} 
+                src={mediaUrl(profile.profile_image)}
                 alt={profile.name} 
                 className="w-full h-full object-cover rounded-xl"
                 referrerPolicy="no-referrer"
@@ -392,7 +393,7 @@ export default function TapCardPreview({ profile, isStandalone = false }: TapCar
                   className="aspect-square bg-slate-900 rounded-xl overflow-hidden border border-slate-850 hover:border-slate-700 transition-all cursor-pointer group"
                 >
                   <img 
-                    src={img} 
+                    src={mediaUrl(img)}
                     alt={`Gallery ${i}`} 
                     className="w-full h-full object-cover group-hover:scale-110 transition-all duration-300" 
                     referrerPolicy="no-referrer"
@@ -413,7 +414,7 @@ export default function TapCardPreview({ profile, isStandalone = false }: TapCar
                   <div className="flex items-center gap-2.5 mb-2.5">
                     {test.avatar ? (
                       <img 
-                        src={test.avatar} 
+                        src={mediaUrl(test.avatar)}
                         alt={test.name} 
                         className="w-8 h-8 rounded-full object-cover" 
                         referrerPolicy="no-referrer"
@@ -538,7 +539,7 @@ export default function TapCardPreview({ profile, isStandalone = false }: TapCar
           className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm transition-all"
         >
           <div className="relative max-w-md max-h-[80vh] bg-slate-950 p-1 border border-slate-800 rounded-2xl overflow-hidden">
-            <img src={activePhoto} alt="Zoomed" className="w-full h-auto object-contain max-h-[75vh]" referrerPolicy="no-referrer" />
+            <img src={mediaUrl(activePhoto)} alt="Zoomed" className="w-full h-auto object-contain max-h-[75vh]" referrerPolicy="no-referrer" />
             <div className="absolute top-2 right-2 px-2.5 py-1 bg-black/60 rounded-lg text-xs font-mono text-white">Tap anywhere to close</div>
           </div>
         </div>
