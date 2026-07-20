@@ -19,6 +19,7 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'slug',
         'email',
         'password',
         'phone_number',
@@ -52,6 +53,8 @@ class User extends Authenticatable
         'pik',
         'booking',
         'reviews',
+        'work_hours',
+        'views',
         'google_redirect',
     ];
 
@@ -76,6 +79,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'gallery' => 'array',
+            'testimonials' => 'array',
+            'services' => 'array',
             'work_hours' => 'array',
             'google_redirect' => 'boolean',
         ];
