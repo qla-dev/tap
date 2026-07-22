@@ -84,16 +84,17 @@ export default function App() {
 
   // Initialize and register status triggers
   useEffect(() => {
-    // Load database profiles
-    loadProfiles()
-      .then((loaded) => {
-        setProfiles(loaded);
-        if (loaded.length > 0) setActiveProfileId(loaded[0].id);
-      })
-      .catch((error) => {
-        console.error('Unable to load profiles from Laravel', error);
-        alert('Unable to load profiles from the server.');
-      });
+    // Do not let API requests or failure dialogs interfere with the login screen.
+    if (isAuthenticated) {
+      loadProfiles()
+        .then((loaded) => {
+          setProfiles(loaded);
+          if (loaded.length > 0) setActiveProfileId(loaded[0].id);
+        })
+        .catch((error) => {
+          console.error('Unable to load profiles from Laravel', error);
+        });
+    }
 
     // Monitor Online/Offline Status
     const handleOnline = () => setIsOnline(true);
@@ -123,11 +124,11 @@ export default function App() {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  }, [isAuthenticated]);
 
   const activeProfile = profiles.find(p => p.id === activeProfileId);
   const canEditActiveProfile = Boolean(activeProfile) && (
-    userRole === 'admin' || activeProfile!.created_at.slice(0, 10) >= STANDARD_EDITOR_CUTOFF
+    userRole === 'admin' || (activeProfile?.created_at || '').slice(0, 10) >= STANDARD_EDITOR_CUTOFF
   );
 
   // Keep edits local until the operator explicitly saves the active profile.
