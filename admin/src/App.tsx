@@ -922,26 +922,31 @@ export default function App() {
                     <p className="text-xs text-slate-500">Find the business and connect its Google Place ID to the direct review link.</p>
                   </div>
 
-                  <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5 sm:p-6">
-                    <div className="flex items-start gap-4">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400">
-                        <MapPin className="h-5 w-5" />
+                  <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
+                    <div className="flex items-center gap-2 border-b border-slate-800 bg-slate-850 px-3 py-2.5">
+                      <div className="flex gap-1.5" aria-hidden="true">
+                        <span className="h-2.5 w-2.5 rounded-full bg-rose-500/70" />
+                        <span className="h-2.5 w-2.5 rounded-full bg-amber-500/70" />
+                        <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/70" />
                       </div>
-                      <div className="min-w-0 flex-grow">
-                        <h4 className="font-display font-semibold text-slate-100">Google Place ID Finder</h4>
-                        <p className="mt-1 text-xs leading-relaxed text-slate-400">
-                          Search for the business in Google’s official finder, select it on the map, then copy the Place ID shown in the info window.
-                        </p>
-                        <a
-                          href="https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white transition-colors hover:bg-blue-500"
-                        >
-                          Open Place ID Finder <ExternalLink className="h-3.5 w-3.5" />
-                        </a>
+                      <div className="min-w-0 flex-grow truncate rounded-lg bg-slate-950 px-3 py-1.5 font-mono text-[10px] text-slate-500">
+                        developers.google.com/maps/documentation/javascript/examples/places-placeid-finder
                       </div>
+                      <a
+                        href="https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Open in a new tab"
+                        className="shrink-0 rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
                     </div>
+                    <iframe
+                      title="Google Place ID Finder"
+                      src="https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder"
+                      className="h-[520px] w-full border-0 bg-white"
+                    />
                   </div>
 
                   <div>
