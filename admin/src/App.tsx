@@ -20,6 +20,7 @@ import { mediaUrl } from './utils/media';
 
 const WORK_DAYS = ['Ponedjeljak', 'Utorak', 'Srijeda', 'Četvrtak', 'Petak', 'Subota', 'Nedjelja'] as const;
 const WORK_HOURS_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d - (?:[01]\d|2[0-3]):[0-5]\d$/;
+const GOOGLE_REVIEWS_PREFIX = 'https://search.google.com/local/reviews?placeid=';
 
 const formatWorkHours = (value: string): string | null => {
   const digits = value.replace(/\D/g, '').slice(0, 8);
@@ -52,7 +53,7 @@ export default function App() {
   const [profiles, setProfiles] = useState<ParsedTapProfile[]>([]);
   const [activeProfileId, setActiveProfileId] = useState<number>(1);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'identity' | 'gallery' | 'google' | 'hours' | 'socials' | 'developer'>('identity');
+  const [activeTab, setActiveTab] = useState<'identity' | 'gallery' | 'google' | 'google_review' | 'hours' | 'socials' | 'developer'>('identity');
   
   // PWA & Browser Status State
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -61,11 +62,12 @@ export default function App() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const [workspaceView, setWorkspaceView] = useState<'home' | 'editor'>('home');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => window.innerWidth < 768);
   const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('tap-admin-auth') === 'true');
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [placeSearchQuery, setPlaceSearchQuery] = useState('');
 
   // Form input validation helper state
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -365,7 +367,8 @@ export default function App() {
   const quickActions = [
     { id: 'identity', label: 'Identity & Branding', description: 'Update the profile name, URL slug, email, slogan, and core brand details.', icon: Sliders, iconClass: 'bg-blue-500/15 text-blue-400' },
     { id: 'gallery', label: 'Gallery', description: 'Manage profile and cover images, gallery items, services, and testimonials.', icon: Sparkles, iconClass: 'bg-emerald-500/15 text-emerald-400' },
-    { id: 'google', label: 'Google', description: 'Configure location, embedded map, directions, business page, and reviews.', icon: MapPin, iconClass: 'bg-rose-500/15 text-rose-400' },
+    { id: 'google', label: 'Google', description: 'Configure the location, embedded map, directions, and business page.', icon: MapPin, iconClass: 'bg-rose-500/15 text-rose-400' },
+    { id: 'google_review', label: 'Google Reviews', description: 'Find a business Place ID and configure its direct review link.', icon: MessageSquare, iconClass: 'bg-amber-500/15 text-amber-400' },
     { id: 'hours', label: 'Working Hours', description: 'Set the weekly opening schedule and additional availability information.', icon: Clock, iconClass: 'bg-amber-500/15 text-amber-400' },
     { id: 'socials', label: 'Social & Contact', description: 'Connect contact details, social profiles, booking pages, and partner ID.', icon: Share2, iconClass: 'bg-violet-500/15 text-violet-400' },
     { id: 'developer', label: 'Developer & NFC', description: 'Export profile data, inspect integration details, and program NFC tags.', icon: Code, iconClass: 'bg-orange-500/15 text-orange-400' },
@@ -395,7 +398,7 @@ export default function App() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-slate-950 px-4 text-slate-100 flex items-center justify-center">
+      <div className="min-h-screen touch-manipulation bg-slate-950 px-4 text-slate-100 flex items-center justify-center">
         <form onSubmit={handleLogin} className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
           <div className="mb-6 flex items-center gap-3">
             <img
@@ -422,7 +425,7 @@ export default function App() {
                 autoComplete="username"
                 autoFocus
                 required
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 p-3 text-sm outline-none transition-colors focus:border-blue-500"
+                className="w-full rounded-xl border border-slate-800 bg-slate-950 p-3 text-base outline-none transition-colors focus:border-blue-500"
               />
             </div>
             <div>
@@ -434,7 +437,7 @@ export default function App() {
                 onChange={(event) => setLoginPassword(event.target.value)}
                 autoComplete="current-password"
                 required
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 p-3 text-sm outline-none transition-colors focus:border-blue-500"
+                className="w-full rounded-xl border border-slate-800 bg-slate-950 p-3 text-base outline-none transition-colors focus:border-blue-500"
               />
             </div>
           </div>
@@ -747,6 +750,7 @@ export default function App() {
                 { id: 'identity', label: 'Identity', icon: Sliders },
                 { id: 'gallery', label: 'Gallery', icon: Sparkles },
                 { id: 'google', label: 'Google', icon: MapPin },
+                { id: 'google_review', label: 'Google Review', icon: MessageSquare },
                 { id: 'hours', label: 'Work Hours', icon: Clock },
                 { id: 'socials', label: 'Social', icon: Share2 },
                 { id: 'developer', label: 'Developer Sync & NFC', icon: Code },
@@ -840,12 +844,12 @@ export default function App() {
                 </div>
               )}
 
-              {/* GOOGLE, LOCATION & REVIEWS */}
+              {/* GOOGLE & LOCATION */}
               {activeTab === 'google' && (
                 <div className="space-y-4">
                   <div className="border-b border-slate-850 pb-2 mb-4">
                     <h3 className="font-display font-semibold text-base text-white">Google & Location</h3>
-                    <p className="text-xs text-slate-500">Configure the address, embedded map, directions, business profile, and reviews.</p>
+                    <p className="text-xs text-slate-500">Configure the address, embedded map, directions, and business profile.</p>
                   </div>
 
                   <div>
@@ -879,18 +883,74 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">GOOGLE REVIEWS URL</label>
-                      <input type="url" value={activeProfile.reviews ?? 'https://search.google.com/local/reviews?placeid='} onChange={(e) => handleInputChange('reviews', e.target.value)} className="w-full bg-slate-900 focus:outline-none p-2.5 rounded-xl text-xs font-mono" />
+                </div>
+              )}
+
+              {/* GOOGLE REVIEW & PLACE ID */}
+              {activeTab === 'google_review' && (
+                <div className="space-y-5">
+                  <div className="border-b border-slate-850 pb-2 mb-4">
+                    <h3 className="font-display font-semibold text-base text-white">Google Review</h3>
+                    <p className="text-xs text-slate-500">Find the business and connect its Google Place ID to the direct review link.</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">SEARCH BUSINESS OR ADDRESS</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="search"
+                        value={placeSearchQuery}
+                        onChange={(e) => setPlaceSearchQuery(e.target.value)}
+                        placeholder={activeProfile.office_address || 'Business name, city or address'}
+                        className="min-w-0 flex-grow bg-slate-900 focus:outline-none p-2.5 rounded-xl text-sm"
+                      />
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(placeSearchQuery || activeProfile.office_address || activeProfile.name)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 rounded-xl bg-slate-800 px-3 py-2.5 text-xs font-semibold text-slate-200 hover:bg-slate-700 flex items-center gap-1.5"
+                      >
+                        Open Maps <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
                     </div>
-                    <div>
-                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">GOOGLE REVIEW REDIRECT</label>
-                      <select value={activeProfile.google_redirect ? 1 : 0} onChange={(e) => handleInputChange('google_redirect', Number(e.target.value))} className="w-full bg-slate-900 focus:outline-none p-2.5 rounded-xl text-sm font-semibold">
-                        <option value={0}>Disabled — show profile</option>
-                        <option value={1}>Enabled — redirect to reviews</option>
-                      </select>
+                  </div>
+
+                  <div className="h-56 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
+                    <iframe
+                      title="Google business search map"
+                      src={`https://www.google.com/maps?q=${encodeURIComponent(placeSearchQuery || activeProfile.office_address || activeProfile.name)}&output=embed`}
+                      className="h-full w-full border-0"
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">GOOGLE PLACE ID</label>
+                    <div className="flex overflow-hidden rounded-xl bg-slate-900 focus-within:ring-1 focus-within:ring-blue-500/50">
+                      <span className="hidden max-w-[58%] items-center border-r border-slate-800 px-3 font-mono text-xs text-slate-500 md:flex">
+                        {GOOGLE_REVIEWS_PREFIX}
+                      </span>
+                      <input
+                        type="text"
+                        value={activeProfile.reviews?.startsWith(GOOGLE_REVIEWS_PREFIX) ? activeProfile.reviews.slice(GOOGLE_REVIEWS_PREFIX.length) : ''}
+                        onChange={(e) => {
+                          const placeId = e.target.value.replace(/[^a-zA-Z0-9_-]/g, '');
+                          handleInputChange('reviews', `${GOOGLE_REVIEWS_PREFIX}${placeId}`);
+                        }}
+                        placeholder="ChIJ..."
+                        className="min-w-0 flex-grow bg-transparent p-2.5 font-mono text-xs focus:outline-none"
+                      />
                     </div>
+                    <p className="mt-1.5 text-[10px] text-slate-500">Only paste the Place ID. The review URL prefix is added automatically.</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">GOOGLE REVIEW REDIRECT</label>
+                    <select value={activeProfile.google_redirect ? 1 : 0} onChange={(e) => handleInputChange('google_redirect', Number(e.target.value))} className="w-full bg-slate-900 focus:outline-none p-2.5 rounded-xl text-sm font-semibold">
+                      <option value={0}>Disabled — show profile</option>
+                      <option value={1}>Enabled — redirect to reviews</option>
+                    </select>
                   </div>
                 </div>
               )}
