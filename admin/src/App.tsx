@@ -16,10 +16,37 @@ import { TapProfile, ParsedTapProfile, Testimonial, Service } from './types';
 import { createProfile, deleteProfile, loadProfiles, saveProfile } from './services/api';
 import TapCardPreview from './components/TapCardPreview';
 import NfcProgrammer from './components/NfcProgrammer';
-import DatabaseExporter from './components/DatabaseExporter';
 import { mediaUrl } from './utils/media';
 
 const WORK_DAYS = ['Ponedjeljak', 'Utorak', 'Srijeda', 'Četvrtak', 'Petak', 'Subota', 'Nedjelja'] as const;
+const WORK_HOURS_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d - (?:[01]\d|2[0-3]):[0-5]\d$/;
+
+const formatWorkHours = (value: string): string | null => {
+  const digits = value.replace(/\D/g, '').slice(0, 8);
+  const parts = [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 6), digits.slice(6, 8)];
+
+  if (parts[0].length === 2 && Number(parts[0]) > 23) return null;
+  if (parts[1].length === 2 && Number(parts[1]) > 59) return null;
+  if (parts[2].length === 2 && Number(parts[2]) > 23) return null;
+  if (parts[3].length === 2 && Number(parts[3]) > 59) return null;
+
+  if (digits.length <= 2) return parts[0];
+  if (digits.length <= 4) return `${parts[0]}:${parts[1]}`;
+  if (digits.length <= 6) return `${parts[0]}:${parts[1]} - ${parts[2]}`;
+  return `${parts[0]}:${parts[1]} - ${parts[2]}:${parts[3]}`;
+};
+
+const prefixedUrlValue = (value: string | null, prefix: string): string => {
+  if (!value) return prefix;
+  if (value.startsWith(prefix)) return value;
+
+  try {
+    const url = new URL(value);
+    return `${prefix}${url.pathname.replace(/^\/+/, '')}${url.search}${url.hash}`;
+  } catch {
+    return `${prefix}${value.replace(/^\/+/, '')}`;
+  }
+};
 
 export default function App() {
   const [profiles, setProfiles] = useState<ParsedTapProfile[]>([]);
@@ -239,6 +266,11 @@ export default function App() {
     });
   };
 
+  const handlePrefixedUrlChange = (field: keyof ParsedTapProfile, prefix: string, value: string) => {
+    if (!value.startsWith(prefix)) return;
+    handleInputChange(field, value);
+  };
+
   // Add/Remove Helpers for Complex JSON objects (services, testimonials, gallery)
   const handleAddService = () => {
     if (!activeProfile) return;
@@ -339,25 +371,25 @@ export default function App() {
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col h-screen overflow-hidden" id="qla-main-dashboard">
       
       {/* HEADER SECTION (PWA & STATUS CONTROL BAR) */}
-      <header className="bg-slate-900 border-b border-slate-800 px-6 py-3.5 shrink-0 flex items-center justify-between z-30">
-        <button onClick={() => { setWorkspaceView('home'); setViewMode('edit'); }} className="flex items-center gap-3 text-left cursor-pointer" title="Open dashboard home">
+      <header className="bg-slate-900 border-b border-slate-800 px-3 py-3 sm:px-6 sm:py-3.5 shrink-0 flex flex-col items-stretch gap-3 lg:flex-row lg:items-center lg:justify-between z-30">
+        <button onClick={() => { setWorkspaceView('home'); setViewMode('edit'); }} className="flex min-w-0 items-center gap-3 text-left cursor-pointer" title="Open dashboard home">
           <img
             src="https://deklarant.ai/build/images/logo-qla-dark.png"
             alt="qla.dev"
-            className="h-9 w-auto max-w-[132px] object-contain"
+            className="h-8 w-auto max-w-[112px] object-contain sm:h-9 sm:max-w-[132px]"
             referrerPolicy="no-referrer"
           />
           <div className="h-7 w-px bg-slate-700" />
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="font-display font-bold text-lg tracking-[0.16em] text-white">TAP</span>
             </div>
-            <p className="text-xs text-slate-400">Digital Business Cards & NFC Programmer Hub</p>
+            <p className="text-xs leading-snug text-slate-400">Digital Business Cards & NFC Programmer Hub</p>
           </div>
         </button>
 
         {/* Dynamic PWA Status indicators */}
-        <div className="flex items-center gap-3">
+        <div className="flex w-full items-center gap-2 overflow-x-auto pb-0.5 lg:w-auto lg:gap-3 lg:overflow-visible lg:pb-0">
           {/* Online/Offline Badge */}
           <div className={`px-2.5 py-1 rounded-full border text-xs font-semibold flex items-center gap-1.5 ${
             isOnline 
@@ -384,29 +416,30 @@ export default function App() {
               className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 active:scale-95 transition-all text-white font-semibold text-xs rounded-lg flex items-center gap-1.5 shadow-md shadow-blue-900/30 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>Install PWA App</span>
+              <span className="hidden sm:inline">Install PWA App</span>
             </button>
           ) : isInstalled ? (
             <div className="px-3 py-1.5 bg-slate-800/80 border border-slate-700/60 rounded-lg text-slate-300 text-xs flex items-center gap-1.5 font-semibold">
               <Check className="w-3.5 h-3.5 text-emerald-400" />
-              <span>PWA Installed</span>
+              <span className="hidden sm:inline">PWA Installed</span>
             </div>
           ) : (
             <div className="px-3 py-1.5 bg-slate-850/50 text-slate-500 text-xs rounded-lg border border-slate-800 flex items-center gap-1.5">
               <Info className="w-3.5 h-3.5" />
-              <span>PWA Offline-Ready</span>
+              <span className="hidden sm:inline">PWA Offline-Ready</span>
             </div>
           )}
 
           {/* View Mode Toggle */}
-          <div className="bg-slate-950 rounded-lg p-0.5 border border-slate-800 flex text-xs">
+          <div className="ml-auto shrink-0 bg-slate-950 rounded-lg p-0.5 border border-slate-800 flex text-xs lg:ml-0">
             <button
               onClick={() => setViewMode('edit')}
               className={`px-3 py-1 rounded-md font-medium transition-all cursor-pointer ${
                 viewMode === 'edit' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              Edit Mode
+              <span className="sm:hidden">Edit</span>
+              <span className="hidden sm:inline">Edit Mode</span>
             </button>
             <button
               onClick={() => { setWorkspaceView('editor'); setViewMode('preview'); }}
@@ -414,7 +447,8 @@ export default function App() {
                 viewMode === 'preview' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              Preview Mode
+              <span className="sm:hidden">Preview</span>
+              <span className="hidden sm:inline">Preview Mode</span>
             </button>
           </div>
         </div>
@@ -786,13 +820,26 @@ export default function App() {
                           <input
                             type="text"
                             value={activeProfile.work_hours[day] || ''}
-                            onChange={(e) => handleInputChange('work_hours', {
-                              ...activeProfile.work_hours,
-                              [day]: e.target.value,
-                            })}
-                            placeholder="09:00 - 17:00 (or 'Zatvoreno')"
-                            className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2 rounded-lg text-xs font-mono"
+                            onChange={(e) => {
+                              const formatted = formatWorkHours(e.target.value);
+                              if (formatted === null) return;
+                              handleInputChange('work_hours', {
+                                ...activeProfile.work_hours,
+                                [day]: formatted,
+                              });
+                            }}
+                            inputMode="numeric"
+                            pattern="(?:[01][0-9]|2[0-3]):[0-5][0-9] - (?:[01][0-9]|2[0-3]):[0-5][0-9]"
+                            maxLength={13}
+                            placeholder="09:00 - 17:00"
+                            aria-invalid={Boolean(activeProfile.work_hours[day]) && activeProfile.work_hours[day] !== 'Zatvoreno' && !WORK_HOURS_PATTERN.test(activeProfile.work_hours[day])}
+                            className={`w-full bg-slate-900 border focus:outline-none p-2 rounded-lg text-xs font-mono ${
+                              activeProfile.work_hours[day] && activeProfile.work_hours[day] !== 'Zatvoreno' && !WORK_HOURS_PATTERN.test(activeProfile.work_hours[day])
+                                ? 'border-rose-500 focus:border-rose-400'
+                                : 'border-slate-800 focus:border-blue-500'
+                            }`}
                           />
+                          <p className="mt-1 text-[10px] text-slate-500">24-hour format: HH:MM - HH:MM</p>
                         </div>
                       </div>
                   ))}
@@ -824,8 +871,8 @@ export default function App() {
                       <input type="url" value={activeProfile.website ?? 'https://'} onChange={(e) => handleInputChange('website', e.target.value)} className="w-full bg-slate-900 focus:outline-none p-2 rounded-lg text-xs font-mono" />
                     </div>
                     <div>
-                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">PARTNER KEY / ID</label>
-                      <input type="url" value={activeProfile.pik ?? 'https://olx.ba/'} onChange={(e) => handleInputChange('pik', e.target.value)} className="w-full bg-slate-900 focus:outline-none p-2 rounded-lg text-xs font-mono" />
+                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">OLX/PIK</label>
+                      <input type="url" value={prefixedUrlValue(activeProfile.pik, 'https://olx.ba/')} onChange={(e) => handlePrefixedUrlChange('pik', 'https://olx.ba/', e.target.value)} className="w-full bg-slate-900 focus:outline-none p-2 rounded-lg text-xs font-mono" />
                     </div>
                   </div>
 
@@ -836,8 +883,8 @@ export default function App() {
                       </label>
                       <input
                         type="url"
-                        value={activeProfile.facebook ?? 'https://facebook.com/'}
-                        onChange={(e) => handleInputChange('facebook', e.target.value)}
+                        value={prefixedUrlValue(activeProfile.facebook, 'https://facebook.com/')}
+                        onChange={(e) => handlePrefixedUrlChange('facebook', 'https://facebook.com/', e.target.value)}
                         className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2 rounded-lg text-xs font-mono"
                       />
                     </div>
@@ -847,8 +894,8 @@ export default function App() {
                       </label>
                       <input
                         type="url"
-                        value={activeProfile.instagram ?? 'https://instagram.com/'}
-                        onChange={(e) => handleInputChange('instagram', e.target.value)}
+                        value={prefixedUrlValue(activeProfile.instagram, 'https://instagram.com/')}
+                        onChange={(e) => handlePrefixedUrlChange('instagram', 'https://instagram.com/', e.target.value)}
                         className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2 rounded-lg text-xs font-mono"
                       />
                     </div>
@@ -861,8 +908,8 @@ export default function App() {
                       </label>
                       <input
                         type="url"
-                        value={activeProfile.whatsapp ?? 'https://wa.me/'}
-                        onChange={(e) => handleInputChange('whatsapp', e.target.value)}
+                        value={prefixedUrlValue(activeProfile.whatsapp, 'https://wa.me/')}
+                        onChange={(e) => handlePrefixedUrlChange('whatsapp', 'https://wa.me/', e.target.value)}
                         className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2 rounded-lg text-xs font-mono"
                       />
                     </div>
@@ -872,8 +919,8 @@ export default function App() {
                       </label>
                       <input
                         type="url"
-                        value={activeProfile.linkedin ?? 'https://linkedin.com/in/'}
-                        onChange={(e) => handleInputChange('linkedin', e.target.value)}
+                        value={prefixedUrlValue(activeProfile.linkedin, 'https://linkedin.com/')}
+                        onChange={(e) => handlePrefixedUrlChange('linkedin', 'https://linkedin.com/', e.target.value)}
                         className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2 rounded-lg text-xs font-mono"
                       />
                     </div>
@@ -886,8 +933,8 @@ export default function App() {
                       </label>
                       <input
                         type="url"
-                        value={activeProfile.twitter ?? 'https://x.com/'}
-                        onChange={(e) => handleInputChange('twitter', e.target.value)}
+                        value={prefixedUrlValue(activeProfile.twitter, 'https://x.com/')}
+                        onChange={(e) => handlePrefixedUrlChange('twitter', 'https://x.com/', e.target.value)}
                         className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2 rounded-lg text-xs font-mono"
                       />
                     </div>
@@ -897,8 +944,8 @@ export default function App() {
                       </label>
                       <input
                         type="url"
-                        value={activeProfile.youtube ?? 'https://youtube.com/'}
-                        onChange={(e) => handleInputChange('youtube', e.target.value)}
+                        value={prefixedUrlValue(activeProfile.youtube, 'https://youtube.com/')}
+                        onChange={(e) => handlePrefixedUrlChange('youtube', 'https://youtube.com/', e.target.value)}
                         className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2 rounded-lg text-xs font-mono"
                       />
                     </div>
@@ -911,8 +958,8 @@ export default function App() {
                         <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">CALENDLY BOOKING</label>
                         <input
                           type="url"
-                          value={activeProfile.booking ?? 'https://calendly.com/'}
-                          onChange={(e) => handleInputChange('booking', e.target.value)}
+                          value={prefixedUrlValue(activeProfile.booking, 'https://calendly.com/')}
+                          onChange={(e) => handlePrefixedUrlChange('booking', 'https://calendly.com/', e.target.value)}
                           className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2 rounded-lg text-xs font-mono"
                         />
                       </div>
@@ -920,8 +967,8 @@ export default function App() {
                         <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">AIRBNB DIRECT LINK</label>
                         <input
                           type="url"
-                          value={activeProfile.airbnb ?? 'https://airbnb.com/'}
-                          onChange={(e) => handleInputChange('airbnb', e.target.value)}
+                          value={prefixedUrlValue(activeProfile.airbnb, 'https://airbnb.com/')}
+                          onChange={(e) => handlePrefixedUrlChange('airbnb', 'https://airbnb.com/', e.target.value)}
                           className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2 rounded-lg text-xs font-mono"
                         />
                       </div>
@@ -942,16 +989,32 @@ export default function App() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">PROFILE IMAGE URL</label>
-                        <input type="text" value={activeProfile.profile_image ?? 'https://'} onChange={(e) => handleInputChange('profile_image', e.target.value)} className="w-full bg-slate-900 focus:outline-none p-2.5 rounded-xl text-xs font-mono mb-2" />
+                        <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">PROFILE IMAGE</label>
+                        {activeProfile.profile_image && activeProfile.profile_image !== 'https://' && (
+                          <div className="mb-3 flex h-28 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/50">
+                            <img
+                              src={mediaUrl(activeProfile.profile_image)}
+                              alt="Profile image preview"
+                              className="h-20 w-20 rounded-full border-2 border-slate-700 object-cover shadow-lg"
+                            />
+                          </div>
+                        )}
                         <label className="inline-flex px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold cursor-pointer transition-all">
                           Upload Profile Image
                           <input type="file" accept="image/*" onChange={(e) => handleImageUpload('profile_image', e)} className="hidden" />
                         </label>
                       </div>
                       <div>
-                        <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">COVER IMAGE URL</label>
-                        <input type="text" value={activeProfile.cover_image ?? 'https://'} onChange={(e) => handleInputChange('cover_image', e.target.value)} className="w-full bg-slate-900 focus:outline-none p-2.5 rounded-xl text-xs font-mono mb-2" />
+                        <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">COVER IMAGE</label>
+                        {activeProfile.cover_image && activeProfile.cover_image !== 'https://' && (
+                          <div className="mb-3 h-28 overflow-hidden rounded-xl border border-slate-800 bg-slate-900/50">
+                            <img
+                              src={mediaUrl(activeProfile.cover_image)}
+                              alt="Cover image preview"
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        )}
                         <label className="inline-flex px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold cursor-pointer transition-all">
                           Upload Cover Image
                           <input type="file" accept="image/*" onChange={(e) => handleImageUpload('cover_image', e)} className="hidden" />
@@ -996,7 +1059,7 @@ export default function App() {
                   </div>
 
                   {/* Services List Builder */}
-                  <div>
+                  <div className="hidden">
                     <div className="flex justify-between items-center border-b border-slate-850 pb-2 mb-4">
                       <div>
                         <h3 className="font-display font-semibold text-base text-white">Services Offered</h3>
@@ -1078,7 +1141,7 @@ export default function App() {
                   </div>
 
                   {/* Testimonial / Review Builder */}
-                  <div>
+                  <div className="hidden">
                     <div className="flex justify-between items-center border-b border-slate-850 pb-2 mb-4">
                       <div>
                         <h3 className="font-display font-semibold text-base text-white">Testimonials & Reviews</h3>
@@ -1164,9 +1227,6 @@ export default function App() {
               {activeTab === 'developer' && (
                 <div className="space-y-6">
                   
-                  {/* Database Exporter (MySQL 43-column query generator) */}
-                  <DatabaseExporter profile={activeProfile} />
-
                   {/* Web NFC tag programming module */}
                   <NfcProgrammer profile={activeProfile} />
 
