@@ -930,10 +930,10 @@ export default function App() {
                         <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/70" />
                       </div>
                       <div className="min-w-0 flex-grow truncate rounded-lg bg-slate-950 px-3 py-1.5 font-mono text-[10px] text-slate-500">
-                        developers.google.com/maps/documentation/javascript/examples/places-placeid-finder
+                        placeidfinder.com
                       </div>
                       <a
-                        href="https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder"
+                        href="https://placeidfinder.com/"
                         target="_blank"
                         rel="noopener noreferrer"
                         title="Open in a new tab"
@@ -943,8 +943,8 @@ export default function App() {
                       </a>
                     </div>
                     <iframe
-                      title="Google Place ID Finder"
-                      src="https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder"
+                      title="Place ID Finder"
+                      src="https://placeidfinder.com/"
                       className="h-[520px] w-full border-0 bg-white"
                     />
                   </div>
