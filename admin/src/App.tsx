@@ -21,6 +21,7 @@ import { mediaUrl } from './utils/media';
 const WORK_DAYS = ['Ponedjeljak', 'Utorak', 'Srijeda', 'Četvrtak', 'Petak', 'Subota', 'Nedjelja'] as const;
 const WORK_HOURS_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d - (?:[01]\d|2[0-3]):[0-5]\d$/;
 const GOOGLE_REVIEWS_PREFIX = 'https://search.google.com/local/reviews?placeid=';
+const STANDARD_EDITOR_CUTOFF = '2026-07-22';
 
 const formatWorkHours = (value: string): string | null => {
   const digits = value.replace(/\D/g, '').slice(0, 8);
@@ -63,11 +64,17 @@ export default function App() {
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const [workspaceView, setWorkspaceView] = useState<'home' | 'editor'>('home');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => window.innerWidth < 768);
-  const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('tap-admin-auth') === 'true');
+  const [userRole, setUserRole] = useState<'admin' | 'editor' | null>(() => {
+    const storedRole = sessionStorage.getItem('tap-admin-role');
+    return storedRole === 'admin' || storedRole === 'editor' ? storedRole : null;
+  });
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    const storedRole = sessionStorage.getItem('tap-admin-role');
+    return sessionStorage.getItem('tap-admin-auth') === 'true' && (storedRole === 'admin' || storedRole === 'editor');
+  });
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [googleMapSearch, setGoogleMapSearch] = useState('');
   const [copiedMapSearch, setCopiedMapSearch] = useState(false);
   const [dirtyProfileIds, setDirtyProfileIds] = useState<Set<number>>(() => new Set());
   const [savingProfile, setSavingProfile] = useState(false);
@@ -119,9 +126,13 @@ export default function App() {
   }, []);
 
   const activeProfile = profiles.find(p => p.id === activeProfileId);
+  const canEditActiveProfile = Boolean(activeProfile) && (
+    userRole === 'admin' || activeProfile!.created_at.slice(0, 10) >= STANDARD_EDITOR_CUTOFF
+  );
 
   // Keep edits local until the operator explicitly saves the active profile.
   const handleUpdateProfile = (updated: ParsedTapProfile) => {
+    if (userRole !== 'admin' && updated.created_at.slice(0, 10) < STANDARD_EDITOR_CUTOFF) return;
     const nextList = profiles.map(p => p.id === updated.id ? updated : p);
     setProfiles(nextList);
     setDirtyProfileIds(current => new Set(current).add(updated.id));
@@ -216,6 +227,7 @@ export default function App() {
   };
 
   const handleDeleteProfile = async (id: number) => {
+    if (userRole !== 'admin') return;
     if (profiles.length <= 1) {
       alert("At least one template profile is required.");
       return;
@@ -306,11 +318,10 @@ export default function App() {
   const handleGenerateGoogleLinks = (searchValue?: string) => {
     if (!activeProfile) return;
 
-    const query = (searchValue || googleMapSearch || activeProfile.office_address || activeProfile.name).trim();
+    const query = (searchValue || activeProfile.office_address || activeProfile.name).trim();
     if (!query) return;
 
     const encodedQuery = encodeURIComponent(query);
-    setGoogleMapSearch(query);
     handleUpdateProfile({
       ...activeProfile,
       map_location: `https://maps.google.com/maps?q=${encodedQuery}&z=15&output=embed`,
@@ -385,7 +396,7 @@ export default function App() {
   };
 
   const handleRemoveGalleryImage = (idx: number) => {
-    if (!activeProfile) return;
+    if (!activeProfile || userRole !== 'admin') return;
     const nextGallery = activeProfile.gallery.filter((_, i) => i !== idx);
     handleInputChange('gallery', nextGallery);
   };
@@ -433,8 +444,16 @@ export default function App() {
   const handleLogin = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (loginUsername === 'qla.dev' && loginPassword === '1234') {
+    const role = loginUsername === 'qla.dev.admin'
+      ? 'admin'
+      : loginUsername === 'qla.dev'
+        ? 'editor'
+        : null;
+
+    if (role && loginPassword === '1234') {
       sessionStorage.setItem('tap-admin-auth', 'true');
+      sessionStorage.setItem('tap-admin-role', role);
+      setUserRole(role);
       setIsAuthenticated(true);
       setLoginError('');
       setLoginPassword('');
@@ -446,6 +465,8 @@ export default function App() {
 
   const handleLogout = () => {
     sessionStorage.removeItem('tap-admin-auth');
+    sessionStorage.removeItem('tap-admin-role');
+    setUserRole(null);
     setIsAuthenticated(false);
     setLoginUsername('');
     setLoginPassword('');
@@ -710,7 +731,7 @@ export default function App() {
                         <span className="text-[10px] text-slate-500 font-mono flex items-center gap-0.5">
                           <Eye className="w-3 h-3" /> {p.views}
                         </span>
-                        <button
+                        {userRole === 'admin' && <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleDeleteProfile(p.id);
@@ -719,7 +740,7 @@ export default function App() {
                           title="Delete Profile"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        </button>}
                       </div>}
                     </div>
                   );
@@ -848,7 +869,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={handleSaveProfile}
-                disabled={!dirtyProfileIds.has(activeProfile.id) || savingProfile}
+                disabled={!canEditActiveProfile || !dirtyProfileIds.has(activeProfile.id) || savingProfile}
                 className={`shrink-0 rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all flex items-center gap-1.5 ${
                   dirtyProfileIds.has(activeProfile.id)
                     ? 'bg-emerald-600 text-white hover:bg-emerald-500 cursor-pointer'
@@ -862,6 +883,12 @@ export default function App() {
 
             {/* Editing Pane Area */}
             <div className="flex-grow overflow-y-auto p-6 space-y-6 scrollbar">
+              {!canEditActiveProfile && (
+                <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-xs text-amber-300 flex items-start gap-2">
+                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>This profile is read-only for your account. You can edit profiles created on or after July 22, 2026, or create a new profile.</span>
+                </div>
+              )}
               
               {/* TAB 1: GENERAL & IDENTITY */}
               {activeTab === 'identity' && (
@@ -939,10 +966,9 @@ export default function App() {
                   </div>
 
                   <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.9fr)]">
-                    <div className="space-y-4">
                     <div>
                       <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">LOCATION / STREET ADDRESS</label>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col gap-2 sm:flex-row">
                         <input
                           type="text"
                           value={activeProfile.office_address || ''}
@@ -957,53 +983,16 @@ export default function App() {
                           Generate Links
                         </button>
                       </div>
-                      <p className="mt-1.5 text-[10px] text-slate-500">Generates the map, directions, and place URL without an API key.</p>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">EMBEDDED MAP URL</label>
-                    <input
-                      type="url"
-                      value={activeProfile.map_location ?? 'https://www.google.com/maps/embed?pb='}
-                      onChange={(e) => handleInputChange('map_location', e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2.5 rounded-xl text-xs font-mono"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">DIRECTIONS URL</label>
-                      <input type="url" value={activeProfile.directions ?? 'https://www.google.com/maps/dir/?api=1&destination='} onChange={(e) => handleInputChange('directions', e.target.value)} className="w-full bg-slate-900 focus:outline-none p-2.5 rounded-xl text-xs font-mono" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">GOOGLE MAPS PLACE URL</label>
-                      <input type="url" value={activeProfile.google ?? 'https://www.google.com/search?q='} onChange={(e) => handleInputChange('google', e.target.value)} className="w-full bg-slate-900 focus:outline-none p-2.5 rounded-xl text-xs font-mono" />
-                    </div>
-                  </div>
+                      <p className="mt-1.5 text-[10px] text-slate-500">One address generates the map, directions, and Google Maps place link.</p>
                     </div>
 
                   <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900/35 p-4">
-                    <div>
-                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">FIND PLACE ON GOOGLE MAPS</label>
-                      <div className="flex flex-wrap gap-2">
-                        <input
-                          type="search"
-                          value={googleMapSearch}
-                          onChange={(e) => setGoogleMapSearch(e.target.value)}
-                          placeholder={activeProfile.office_address || 'Business name or address'}
-                          className="min-w-0 flex-grow bg-slate-900 focus:outline-none p-2.5 rounded-xl text-sm"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleGenerateGoogleLinks()}
-                          className="shrink-0 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-blue-500"
-                        >
-                          Generate Links
-                        </button>
+                    <div className="flex items-center justify-between gap-3">
+                      <label className="text-xs font-mono font-bold text-slate-400 uppercase">GOOGLE MAPS</label>
                         <button
                           type="button"
                           onClick={() => {
-                            const query = googleMapSearch || activeProfile.office_address || activeProfile.name;
+                            const query = activeProfile.office_address || activeProfile.name;
                             navigator.clipboard.writeText(query);
                             setCopiedMapSearch(true);
                             window.setTimeout(() => setCopiedMapSearch(false), 1800);
@@ -1013,14 +1002,12 @@ export default function App() {
                           {copiedMapSearch ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
                           {copiedMapSearch ? 'Copied' : 'Copy Search'}
                         </button>
-                      </div>
-                      <p className="mt-1.5 text-[10px] text-slate-500">Copy this search, then paste it into the Place ID Finder tab.</p>
                     </div>
 
                     <div className="h-64 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
                       <iframe
                         title="Google Maps place search"
-                        src={activeProfile.map_location || `https://maps.google.com/maps?q=${encodeURIComponent(googleMapSearch || activeProfile.office_address || activeProfile.name)}&z=15&output=embed`}
+                        src={`https://maps.google.com/maps?q=${encodeURIComponent(activeProfile.office_address || activeProfile.name)}&z=15&output=embed`}
                         className="h-full w-full border-0"
                         loading="lazy"
                         referrerPolicy="no-referrer-when-downgrade"
@@ -1332,12 +1319,12 @@ export default function App() {
                       {activeProfile.gallery.map((item, i) => (
                         <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-slate-800 bg-slate-900 group">
                           <img src={mediaUrl(item.image)} alt={item.alt || `Gallery item ${i + 1}`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                          <button
+                          {userRole === 'admin' && <button
                             onClick={() => handleRemoveGalleryImage(i)}
                             className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-rose-400 hover:text-rose-300 font-semibold text-xs transition-all cursor-pointer"
                           >
                             Remove
-                          </button>
+                          </button>}
                         </div>
                       ))}
                       {activeProfile.gallery.length === 0 && (
