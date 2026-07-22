@@ -21,6 +21,7 @@ import { mediaUrl } from './utils/media';
 const WORK_DAYS = ['Ponedjeljak', 'Utorak', 'Srijeda', 'Četvrtak', 'Petak', 'Subota', 'Nedjelja'] as const;
 const WORK_HOURS_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d - (?:[01]\d|2[0-3]):[0-5]\d$/;
 const GOOGLE_REVIEWS_PREFIX = 'https://search.google.com/local/reviews?placeid=';
+const GOOGLE_EMBED_PREFIX = 'https://www.google.com/maps/embed?pb=';
 const STANDARD_EDITOR_CUTOFF = '2026-07-22';
 
 const formatWorkHours = (value: string): string | null => {
@@ -325,10 +326,14 @@ export default function App() {
     const encodedQuery = encodeURIComponent(query);
     handleUpdateProfile({
       ...activeProfile,
-      map_location: `https://maps.google.com/maps?q=${encodedQuery}&z=15&output=embed`,
       directions: `https://www.google.com/maps/dir/?api=1&destination=${encodedQuery}`,
       google: `https://www.google.com/maps/search/?api=1&query=${encodedQuery}`,
     });
+  };
+
+  const handleGoogleEmbedChange = (value: string) => {
+    const iframeSource = value.match(/src=["']([^"']+)["']/i)?.[1];
+    handleInputChange('map_location', iframeSource || value);
   };
 
   // Add/Remove Helpers for Complex JSON objects (services, testimonials, gallery)
@@ -984,7 +989,46 @@ export default function App() {
                           Generate Links
                         </button>
                       </div>
-                      <p className="mt-1.5 text-[10px] text-slate-500">One address generates the map, directions, and Google Maps place link.</p>
+                      <p className="mt-1.5 text-[10px] text-slate-500">One address generates the directions and Google Maps place link.</p>
+
+                      <div className="mt-5 space-y-4">
+                        <div>
+                          <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">EMBEDDED MAP URL</label>
+                          <input
+                            type="text"
+                            value={activeProfile.map_location ?? GOOGLE_EMBED_PREFIX}
+                            onChange={(e) => handleGoogleEmbedChange(e.target.value)}
+                            placeholder={GOOGLE_EMBED_PREFIX}
+                            className={`w-full bg-slate-900 border focus:outline-none p-2.5 rounded-xl text-xs font-mono ${
+                              activeProfile.map_location && !activeProfile.map_location.startsWith(GOOGLE_EMBED_PREFIX)
+                                ? 'border-rose-500 focus:border-rose-400'
+                                : 'border-slate-800 focus:border-blue-500'
+                            }`}
+                          />
+                          <p className="mt-1.5 text-[10px] text-slate-500">Paste the Google URL containing <span className="font-mono text-slate-400">/maps/embed?pb=</span>, or paste the complete iframe code.</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                          <div>
+                            <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">DIRECTIONS URL</label>
+                            <input
+                              type="url"
+                              value={activeProfile.directions ?? 'https://www.google.com/maps/dir/?api=1&destination='}
+                              onChange={(e) => handleInputChange('directions', e.target.value)}
+                              className="w-full bg-slate-900 focus:outline-none p-2.5 rounded-xl text-xs font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">GOOGLE MAPS PLACE URL</label>
+                            <input
+                              type="url"
+                              value={activeProfile.google ?? 'https://www.google.com/maps/search/?api=1&query='}
+                              onChange={(e) => handleInputChange('google', e.target.value)}
+                              className="w-full bg-slate-900 focus:outline-none p-2.5 rounded-xl text-xs font-mono"
+                            />
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                   <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900/35 p-4">
@@ -1008,7 +1052,9 @@ export default function App() {
                     <div className="h-64 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
                       <iframe
                         title="Google Maps place search"
-                        src={`https://maps.google.com/maps?q=${encodeURIComponent(activeProfile.office_address || activeProfile.name)}&z=15&output=embed`}
+                        src={activeProfile.map_location?.startsWith(GOOGLE_EMBED_PREFIX)
+                          ? activeProfile.map_location
+                          : `https://maps.google.com/maps?q=${encodeURIComponent(activeProfile.office_address || activeProfile.name)}&z=15&output=embed`}
                         className="h-full w-full border-0"
                         loading="lazy"
                         referrerPolicy="no-referrer-when-downgrade"
