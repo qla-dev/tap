@@ -67,6 +67,8 @@ export default function App() {
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [googleMapSearch, setGoogleMapSearch] = useState('');
+  const [copiedMapSearch, setCopiedMapSearch] = useState(false);
 
   // Form input validation helper state
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -274,6 +276,22 @@ export default function App() {
   const handlePrefixedUrlChange = (field: keyof ParsedTapProfile, prefix: string, value: string) => {
     if (!value.startsWith(prefix)) return;
     handleInputChange(field, value);
+  };
+
+  const handleGenerateGoogleLinks = (searchValue?: string) => {
+    if (!activeProfile) return;
+
+    const query = (searchValue || googleMapSearch || activeProfile.office_address || activeProfile.name).trim();
+    if (!query) return;
+
+    const encodedQuery = encodeURIComponent(query);
+    setGoogleMapSearch(query);
+    handleUpdateProfile({
+      ...activeProfile,
+      map_location: `https://www.google.com/maps?q=${encodedQuery}&output=embed`,
+      directions: `https://www.google.com/maps/dir/?api=1&destination=${encodedQuery}`,
+      google: `https://www.google.com/maps/search/?api=1&query=${encodedQuery}`,
+    });
   };
 
   // Add/Remove Helpers for Complex JSON objects (services, testimonials, gallery)
@@ -880,14 +898,26 @@ export default function App() {
                     <p className="text-xs text-slate-500">Configure the address, embedded map, directions, and business profile.</p>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">LOCATION / STREET ADDRESS</label>
-                    <input
-                      type="text"
-                      value={activeProfile.office_address || ''}
-                      onChange={(e) => handleInputChange('office_address', e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2.5 rounded-xl text-sm font-medium"
-                    />
+                  <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.9fr)]">
+                    <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">LOCATION / STREET ADDRESS</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={activeProfile.office_address || ''}
+                          onChange={(e) => handleInputChange('office_address', e.target.value)}
+                          className="min-w-0 flex-grow bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none p-2.5 rounded-xl text-sm font-medium"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleGenerateGoogleLinks(activeProfile.office_address || '')}
+                          className="shrink-0 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-blue-500"
+                        >
+                          Generate Links
+                        </button>
+                      </div>
+                      <p className="mt-1.5 text-[10px] text-slate-500">Generates the map, directions, and place URL without an API key.</p>
                   </div>
 
                   <div>
@@ -906,9 +936,57 @@ export default function App() {
                       <input type="url" value={activeProfile.directions ?? 'https://www.google.com/maps/dir/?api=1&destination='} onChange={(e) => handleInputChange('directions', e.target.value)} className="w-full bg-slate-900 focus:outline-none p-2.5 rounded-xl text-xs font-mono" />
                     </div>
                     <div>
-                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">GOOGLE MAP / BUSINESS PAGE</label>
+                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">GOOGLE MAPS PLACE URL</label>
                       <input type="url" value={activeProfile.google ?? 'https://www.google.com/search?q='} onChange={(e) => handleInputChange('google', e.target.value)} className="w-full bg-slate-900 focus:outline-none p-2.5 rounded-xl text-xs font-mono" />
                     </div>
+                  </div>
+                    </div>
+
+                  <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900/35 p-4">
+                    <div>
+                      <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">FIND PLACE ON GOOGLE MAPS</label>
+                      <div className="flex flex-wrap gap-2">
+                        <input
+                          type="search"
+                          value={googleMapSearch}
+                          onChange={(e) => setGoogleMapSearch(e.target.value)}
+                          placeholder={activeProfile.office_address || 'Business name or address'}
+                          className="min-w-0 flex-grow bg-slate-900 focus:outline-none p-2.5 rounded-xl text-sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleGenerateGoogleLinks()}
+                          className="shrink-0 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-blue-500"
+                        >
+                          Generate Links
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const query = googleMapSearch || activeProfile.office_address || activeProfile.name;
+                            navigator.clipboard.writeText(query);
+                            setCopiedMapSearch(true);
+                            window.setTimeout(() => setCopiedMapSearch(false), 1800);
+                          }}
+                          className="shrink-0 rounded-xl bg-slate-800 px-4 py-2.5 text-xs font-semibold text-slate-200 transition-colors hover:bg-slate-700 flex items-center gap-1.5"
+                        >
+                          {copiedMapSearch ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                          {copiedMapSearch ? 'Copied' : 'Copy Search'}
+                        </button>
+                      </div>
+                      <p className="mt-1.5 text-[10px] text-slate-500">Copy this search, then paste it into the Place ID Finder tab.</p>
+                    </div>
+
+                    <div className="h-64 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
+                      <iframe
+                        title="Google Maps place search"
+                        src={`https://www.google.com/maps?q=${encodeURIComponent(googleMapSearch || activeProfile.office_address || activeProfile.name)}&output=embed`}
+                        className="h-full w-full border-0"
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                      />
+                    </div>
+                  </div>
                   </div>
 
                 </div>
