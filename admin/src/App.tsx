@@ -316,19 +316,33 @@ export default function App() {
     handleInputChange('testimonials', nextTests);
   };
 
-  const handleAddGalleryUrl = () => {
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!activeProfile) return;
-    const url = prompt("Enter complete image URL:");
-    if (url) {
-      handleInputChange('gallery', [...activeProfile.gallery, {
-        image: url,
-        zoom: url,
-        alt: `Gallery image ${activeProfile.gallery.length + 1}`,
-      }]);
-    }
+
+    const files: File[] = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+
+    const uploadedImages = await Promise.all(files.map((file) => new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    })));
+
+    const startIndex = activeProfile.gallery.length;
+    handleInputChange('gallery', [
+      ...activeProfile.gallery,
+      ...uploadedImages.map((image, index) => ({
+        image,
+        zoom: image,
+        alt: `Gallery image ${startIndex + index + 1}`,
+      })),
+    ]);
+
+    e.target.value = '';
   };
 
-  const handleRemoveGalleryUrl = (idx: number) => {
+  const handleRemoveGalleryImage = (idx: number) => {
     if (!activeProfile) return;
     const nextGallery = activeProfile.gallery.filter((_, i) => i !== idx);
     handleInputChange('gallery', nextGallery);
@@ -1180,12 +1194,10 @@ export default function App() {
                         <h3 className="font-display font-semibold text-base text-white">Media Gallery</h3>
                         <p className="text-xs text-slate-500">Add portfolio layouts to display on the tap page.</p>
                       </div>
-                      <button
-                        onClick={handleAddGalleryUrl}
-                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer"
-                      >
-                        <Plus className="w-3.5 h-3.5" /> Add Photo URL
-                      </button>
+                      <label className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer">
+                        <Plus className="w-3.5 h-3.5" /> Upload Photos
+                        <input type="file" accept="image/*" multiple onChange={handleGalleryUpload} className="hidden" />
+                      </label>
                     </div>
 
                     <div className="grid grid-cols-4 gap-3">
@@ -1193,7 +1205,7 @@ export default function App() {
                         <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-slate-800 bg-slate-900 group">
                           <img src={mediaUrl(item.image)} alt={item.alt || `Gallery item ${i + 1}`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                           <button
-                            onClick={() => handleRemoveGalleryUrl(i)}
+                            onClick={() => handleRemoveGalleryImage(i)}
                             className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-rose-400 hover:text-rose-300 font-semibold text-xs transition-all cursor-pointer"
                           >
                             Remove
