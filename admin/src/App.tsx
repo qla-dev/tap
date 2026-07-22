@@ -8,7 +8,7 @@ import {
   Database, Nfc, Smartphone, Settings, Plus, Search, 
   Trash2, Copy, Check, Sparkles, Sliders, MapPin, 
   Clock, Share2, Eye, ShieldCheck, Heart, AlertTriangle, 
-  Info, Wifi, WifiOff, Download, Code,
+  Info, Wifi, WifiOff, Download,
   Wrench, Home, MessageSquare, ChevronRight, Play, ExternalLink,
   Facebook, Instagram, Linkedin, Twitter, Youtube, ChevronLeft, LayoutDashboard
 } from 'lucide-react';
@@ -67,7 +67,6 @@ export default function App() {
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [placeSearchQuery, setPlaceSearchQuery] = useState('');
 
   // Form input validation helper state
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -379,13 +378,13 @@ export default function App() {
   };
 
   const quickActions = [
+    { id: 'developer', label: 'NFC', description: 'Program a physical NFC card to open the selected digital profile.', icon: Nfc, iconClass: 'bg-orange-500/15 text-orange-400' },
     { id: 'identity', label: 'Identity & Branding', description: 'Update the profile name, URL slug, email, slogan, and core brand details.', icon: Sliders, iconClass: 'bg-blue-500/15 text-blue-400' },
     { id: 'gallery', label: 'Gallery', description: 'Manage profile and cover images, gallery items, services, and testimonials.', icon: Sparkles, iconClass: 'bg-emerald-500/15 text-emerald-400' },
     { id: 'google', label: 'Google', description: 'Configure the location, embedded map, directions, and business page.', icon: MapPin, iconClass: 'bg-rose-500/15 text-rose-400' },
     { id: 'google_review', label: 'Google Reviews', description: 'Find a business Place ID and configure its direct review link.', icon: MessageSquare, iconClass: 'bg-amber-500/15 text-amber-400' },
     { id: 'hours', label: 'Working Hours', description: 'Set the weekly opening schedule and additional availability information.', icon: Clock, iconClass: 'bg-amber-500/15 text-amber-400' },
     { id: 'socials', label: 'Social & Contact', description: 'Connect contact details, social profiles, booking pages, and partner ID.', icon: Share2, iconClass: 'bg-violet-500/15 text-violet-400' },
-    { id: 'developer', label: 'Developer & NFC', description: 'Export profile data, inspect integration details, and program NFC tags.', icon: Code, iconClass: 'bg-orange-500/15 text-orange-400' },
   ] as const;
 
   const handleLogin = (event: React.FormEvent<HTMLFormElement>) => {
@@ -759,33 +758,48 @@ export default function App() {
           <main className="flex-grow bg-slate-950 border-r border-slate-800 flex flex-col overflow-hidden">
             
             {/* Section tabs header */}
-            <div className="bg-slate-900 border-b border-slate-800 px-6 py-2.5 shrink-0 flex gap-2 overflow-x-auto scrollbar">
-              {[
-                { id: 'identity', label: 'Identity', icon: Sliders },
-                { id: 'gallery', label: 'Gallery', icon: Sparkles },
-                { id: 'google', label: 'Google', icon: MapPin },
-                { id: 'google_review', label: 'Google Review', icon: MessageSquare },
-                { id: 'hours', label: 'Work Hours', icon: Clock },
-                { id: 'socials', label: 'Social', icon: Share2 },
-                { id: 'developer', label: 'Developer Sync & NFC', icon: Code },
-              ].map(tab => {
-                const Icon = tab.icon;
-                const isSelected = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
-                    className={`px-3.5 py-1.5 rounded-lg font-semibold text-xs flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
-                      isSelected 
-                        ? 'bg-blue-600/10 border border-blue-500/25 text-blue-400 font-bold shadow' 
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850 border border-transparent'
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
+            <div className="bg-slate-900 border-b border-slate-800 px-3 sm:px-6 py-2.5 shrink-0 flex items-center min-w-0">
+              <button
+                onClick={() => setActiveTab('developer')}
+                className={`shrink-0 px-3.5 py-1.5 rounded-lg font-semibold text-xs flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+                  activeTab === 'developer'
+                    ? 'bg-blue-600/10 border border-blue-500/25 text-blue-400 font-bold shadow'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850 border border-transparent'
+                }`}
+              >
+                <Nfc className="w-3.5 h-3.5" />
+                <span>NFC</span>
+              </button>
+
+              <div className="mx-2 h-6 w-px shrink-0 bg-slate-700" />
+
+              <div className="flex min-w-0 flex-grow gap-2 overflow-x-auto scrollbar">
+                {[
+                  { id: 'identity', label: 'Identity', icon: Sliders },
+                  { id: 'gallery', label: 'Gallery', icon: Sparkles },
+                  { id: 'google', label: 'Google', icon: MapPin },
+                  { id: 'google_review', label: 'Google Review', icon: MessageSquare },
+                  { id: 'hours', label: 'Work Hours', icon: Clock },
+                  { id: 'socials', label: 'Social', icon: Share2 },
+                ].map(tab => {
+                  const Icon = tab.icon;
+                  const isSelected = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as any)}
+                      className={`px-3.5 py-1.5 rounded-lg font-semibold text-xs flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+                        isSelected
+                          ? 'bg-blue-600/10 border border-blue-500/25 text-blue-400 font-bold shadow'
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850 border border-transparent'
+                      }`}
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                      <span>{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Editing Pane Area */}
@@ -908,35 +922,26 @@ export default function App() {
                     <p className="text-xs text-slate-500">Find the business and connect its Google Place ID to the direct review link.</p>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-mono font-bold text-slate-400 mb-1.5 uppercase">SEARCH BUSINESS OR ADDRESS</label>
-                    <div className="flex gap-2">
-                      <input
-                        type="search"
-                        value={placeSearchQuery}
-                        onChange={(e) => setPlaceSearchQuery(e.target.value)}
-                        placeholder={activeProfile.office_address || 'Business name, city or address'}
-                        className="min-w-0 flex-grow bg-slate-900 focus:outline-none p-2.5 rounded-xl text-sm"
-                      />
-                      <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(placeSearchQuery || activeProfile.office_address || activeProfile.name)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="shrink-0 rounded-xl bg-slate-800 px-3 py-2.5 text-xs font-semibold text-slate-200 hover:bg-slate-700 flex items-center gap-1.5"
-                      >
-                        Open Maps <ExternalLink className="h-3.5 w-3.5" />
-                      </a>
+                  <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5 sm:p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400">
+                        <MapPin className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0 flex-grow">
+                        <h4 className="font-display font-semibold text-slate-100">Google Place ID Finder</h4>
+                        <p className="mt-1 text-xs leading-relaxed text-slate-400">
+                          Search for the business in Google’s official finder, select it on the map, then copy the Place ID shown in the info window.
+                        </p>
+                        <a
+                          href="https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white transition-colors hover:bg-blue-500"
+                        >
+                          Open Place ID Finder <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="h-56 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
-                    <iframe
-                      title="Google business search map"
-                      src={`https://www.google.com/maps?q=${encodeURIComponent(placeSearchQuery || activeProfile.office_address || activeProfile.name)}&output=embed`}
-                      className="h-full w-full border-0"
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                    />
                   </div>
 
                   <div>
