@@ -62,6 +62,10 @@ export default function App() {
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const [workspaceView, setWorkspaceView] = useState<'home' | 'editor'>('home');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('tap-admin-auth') === 'true');
+  const [loginUsername, setLoginUsername] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
 
   // Form input validation helper state
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -367,6 +371,86 @@ export default function App() {
     { id: 'developer', label: 'Developer & NFC', description: 'Export profile data, inspect integration details, and program NFC tags.', icon: Code, iconClass: 'bg-orange-500/15 text-orange-400' },
   ] as const;
 
+  const handleLogin = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (loginUsername === 'qla.dev' && loginPassword === '1234') {
+      sessionStorage.setItem('tap-admin-auth', 'true');
+      setIsAuthenticated(true);
+      setLoginError('');
+      setLoginPassword('');
+      return;
+    }
+
+    setLoginError('Incorrect username or password.');
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('tap-admin-auth');
+    setIsAuthenticated(false);
+    setLoginUsername('');
+    setLoginPassword('');
+    setLoginError('');
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-950 px-4 text-slate-100 flex items-center justify-center">
+        <form onSubmit={handleLogin} className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+          <div className="mb-6 flex items-center gap-3">
+            <img
+              src="https://deklarant.ai/build/images/logo-qla-dark.png"
+              alt="qla.dev"
+              className="h-9 w-auto max-w-[132px] object-contain"
+              referrerPolicy="no-referrer"
+            />
+            <div className="h-8 w-px bg-slate-700" />
+            <div>
+              <h1 className="font-display font-bold tracking-[0.16em] text-white">TAP</h1>
+              <p className="text-xs text-slate-400">Admin access</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="login-username" className="mb-1.5 block text-xs font-mono font-bold uppercase text-slate-400">Username</label>
+              <input
+                id="login-username"
+                type="text"
+                value={loginUsername}
+                onChange={(event) => setLoginUsername(event.target.value)}
+                autoComplete="username"
+                autoFocus
+                required
+                className="w-full rounded-xl border border-slate-800 bg-slate-950 p-3 text-sm outline-none transition-colors focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label htmlFor="login-password" className="mb-1.5 block text-xs font-mono font-bold uppercase text-slate-400">Password</label>
+              <input
+                id="login-password"
+                type="password"
+                value={loginPassword}
+                onChange={(event) => setLoginPassword(event.target.value)}
+                autoComplete="current-password"
+                required
+                className="w-full rounded-xl border border-slate-800 bg-slate-950 p-3 text-sm outline-none transition-colors focus:border-blue-500"
+              />
+            </div>
+          </div>
+
+          {loginError && (
+            <p role="alert" className="mt-4 rounded-lg border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-xs text-rose-400">{loginError}</p>
+          )}
+
+          <button type="submit" className="mt-5 w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-500 active:scale-[0.99]">
+            Sign in
+          </button>
+        </form>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col h-screen overflow-hidden" id="qla-main-dashboard">
       
@@ -380,11 +464,9 @@ export default function App() {
             referrerPolicy="no-referrer"
           />
           <div className="h-7 w-px bg-slate-700" />
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="font-display font-bold text-lg tracking-[0.16em] text-white">TAP</span>
-            </div>
-            <p className="text-xs leading-snug text-slate-400">Digital Business Cards & NFC Programmer Hub</p>
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="shrink-0 font-display font-bold text-lg tracking-[0.16em] text-white">TAP</span>
+            <p className="min-w-0 text-xs leading-snug text-slate-400">Digital Business Cards & NFC Programmer Hub</p>
           </div>
         </button>
 
@@ -451,6 +533,14 @@ export default function App() {
               <span className="hidden sm:inline">Preview Mode</span>
             </button>
           </div>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="shrink-0 rounded-lg border border-slate-800 bg-slate-950 px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:text-white"
+          >
+            Log out
+          </button>
         </div>
       </header>
 
