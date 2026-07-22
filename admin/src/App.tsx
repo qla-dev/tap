@@ -10,7 +10,7 @@ import {
   Clock, Share2, Eye, ShieldCheck, Heart, AlertTriangle, 
   Info, Wifi, WifiOff, Download,
   Wrench, Home, MessageSquare, ChevronRight, Play, ExternalLink,
-  Facebook, Instagram, Linkedin, Twitter, Youtube, ChevronLeft, LayoutDashboard
+  Facebook, Instagram, Linkedin, Twitter, Youtube, ChevronLeft, LayoutDashboard, RefreshCw
 } from 'lucide-react';
 import { TapProfile, ParsedTapProfile, Testimonial, Service } from './types';
 import { createProfile, deleteProfile, loadProfiles, saveProfile } from './services/api';
@@ -69,6 +69,8 @@ export default function App() {
   const [loginError, setLoginError] = useState('');
   const [googleMapSearch, setGoogleMapSearch] = useState('');
   const [copiedMapSearch, setCopiedMapSearch] = useState(false);
+  const [dirtyProfileIds, setDirtyProfileIds] = useState<Set<number>>(() => new Set());
+  const [savingProfile, setSavingProfile] = useState(false);
 
   // Form input validation helper state
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -118,13 +120,31 @@ export default function App() {
 
   const activeProfile = profiles.find(p => p.id === activeProfileId);
 
-  // Keep the UI responsive while persisting changes to Laravel in order.
+  // Keep edits local until the operator explicitly saves the active profile.
   const handleUpdateProfile = (updated: ParsedTapProfile) => {
     const nextList = profiles.map(p => p.id === updated.id ? updated : p);
     setProfiles(nextList);
-    void saveProfile(updated).catch((error) => {
+    setDirtyProfileIds(current => new Set(current).add(updated.id));
+  };
+
+  const handleSaveProfile = async () => {
+    if (!activeProfile || !dirtyProfileIds.has(activeProfile.id) || savingProfile) return;
+
+    setSavingProfile(true);
+    try {
+      const saved = await saveProfile(activeProfile);
+      setProfiles(current => current.map(profile => profile.id === saved.id ? saved : profile));
+      setDirtyProfileIds(current => {
+        const next = new Set(current);
+        next.delete(saved.id);
+        return next;
+      });
+    } catch (error) {
       console.error('Unable to save profile', error);
-    });
+      alert('Unable to save changes. Please try again.');
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
   const handleCreateProfile = async () => {
@@ -205,6 +225,11 @@ export default function App() {
         await deleteProfile(id);
         const nextList = profiles.filter(p => p.id !== id);
         setProfiles(nextList);
+        setDirtyProfileIds(current => {
+          const next = new Set(current);
+          next.delete(id);
+          return next;
+        });
         setActiveProfileId(nextList[0].id);
       } catch (error) {
         console.error('Unable to delete profile', error);
@@ -288,7 +313,7 @@ export default function App() {
     setGoogleMapSearch(query);
     handleUpdateProfile({
       ...activeProfile,
-      map_location: `https://www.google.com/maps?q=${encodedQuery}&output=embed`,
+      map_location: `https://maps.google.com/maps?q=${encodedQuery}&z=15&output=embed`,
       directions: `https://www.google.com/maps/dir/?api=1&destination=${encodedQuery}`,
       google: `https://www.google.com/maps/search/?api=1&query=${encodedQuery}`,
     });
@@ -818,6 +843,21 @@ export default function App() {
                   );
                 })}
               </div>
+
+              <div className="mx-2 h-6 w-px shrink-0 bg-slate-700" />
+              <button
+                type="button"
+                onClick={handleSaveProfile}
+                disabled={!dirtyProfileIds.has(activeProfile.id) || savingProfile}
+                className={`shrink-0 rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  dirtyProfileIds.has(activeProfile.id)
+                    ? 'bg-emerald-600 text-white hover:bg-emerald-500 cursor-pointer'
+                    : 'bg-slate-850 text-slate-500 cursor-default'
+                } disabled:opacity-70`}
+              >
+                {savingProfile ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                <span>{savingProfile ? 'Saving' : dirtyProfileIds.has(activeProfile.id) ? 'Save Changes' : 'Saved'}</span>
+              </button>
             </div>
 
             {/* Editing Pane Area */}
@@ -980,7 +1020,7 @@ export default function App() {
                     <div className="h-64 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
                       <iframe
                         title="Google Maps place search"
-                        src={`https://www.google.com/maps?q=${encodeURIComponent(googleMapSearch || activeProfile.office_address || activeProfile.name)}&output=embed`}
+                        src={activeProfile.map_location || `https://maps.google.com/maps?q=${encodeURIComponent(googleMapSearch || activeProfile.office_address || activeProfile.name)}&z=15&output=embed`}
                         className="h-full w-full border-0"
                         loading="lazy"
                         referrerPolicy="no-referrer-when-downgrade"
